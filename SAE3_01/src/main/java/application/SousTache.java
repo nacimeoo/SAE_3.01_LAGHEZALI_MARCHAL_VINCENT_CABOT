@@ -16,6 +16,7 @@ public class SousTache extends TacheAbstraite {
     }
 
     @Override
-    public void afficher() {
+    public String afficher() {
+        return "- Sous Tache : " + getNom();
     }
 }

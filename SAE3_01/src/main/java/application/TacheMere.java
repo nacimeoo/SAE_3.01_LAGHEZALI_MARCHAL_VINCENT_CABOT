@@ -27,6 +27,7 @@ public class TacheMere extends TacheAbstraite {
     }
 
     @Override
-    public void afficher() {
+    public String afficher() {
+        return "- Tache Mere : " + getNom();
     }
 }
