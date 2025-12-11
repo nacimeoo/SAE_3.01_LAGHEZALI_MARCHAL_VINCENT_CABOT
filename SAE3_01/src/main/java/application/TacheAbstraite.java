@@ -84,7 +84,7 @@ public abstract class TacheAbstraite {
 
     public abstract boolean ajouterDependance(TacheAbstraite t);
 
-    public abstract boolean supprimerDependance();
+    public abstract boolean supprimerDependance(TacheAbstraite t);
 
     public abstract void afficher();
 
