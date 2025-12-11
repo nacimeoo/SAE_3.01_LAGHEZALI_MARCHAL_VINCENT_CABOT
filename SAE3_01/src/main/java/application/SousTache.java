@@ -1,6 +1,7 @@
 package application;
 
 public class SousTache extends TacheAbstraite {
+
     public SousTache(int id, String nom) {
         super(id, nom);
     }
@@ -16,7 +17,7 @@ public class SousTache extends TacheAbstraite {
     }
 
     @Override
-    public String afficher() {
-        return "\n" + "      - Sous Tache : " + getNom();
+    public String afficher(String indent) {
+        return "\n" + indent + "|- Sous-tâche : " + this.getNom();
     }
 }

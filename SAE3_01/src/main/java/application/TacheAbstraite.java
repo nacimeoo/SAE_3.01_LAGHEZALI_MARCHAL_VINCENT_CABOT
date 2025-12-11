@@ -86,7 +86,7 @@ public abstract class TacheAbstraite {
 
     public abstract boolean supprimerDependance(TacheAbstraite t);
 
-    public abstract String afficher();
+    public abstract String afficher(String indient);
 
 
 }

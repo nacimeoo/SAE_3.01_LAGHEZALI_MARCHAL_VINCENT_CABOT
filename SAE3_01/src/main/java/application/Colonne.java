@@ -29,11 +29,26 @@ public class Colonne {
         return nom;
     }
 
-    public String afficher(){
-        String s = "--- Colonne : " + nom + " ---";
-        for(TacheAbstraite ta : taches){
-            s += ta.afficher();
+    public String afficher(String indient) {
+
+        ArrayList<TacheAbstraite> dependances = new ArrayList<>();
+
+        for (TacheAbstraite t : taches) {
+            if (t instanceof TacheMere) {
+                dependances.addAll(((TacheMere) t).dependance);
+            }
         }
+        String s = "--- Colonne : " + nom + " ---";
+
+        // Affichage uniquement des racines
+        for (TacheAbstraite t : taches) {
+            if (!dependances.contains(t)) {
+                s += t.afficher(indient);
+            }
+        }
+
         return s;
     }
+
+
 }

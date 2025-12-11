@@ -16,6 +16,10 @@ public class Projet {
         this.colonnes = new ArrayList<>();
     }
 
+    public ArrayList<Colonne> getColonnes() {
+        return colonnes;
+    }
+
     public void ajouterColonne(Colonne colonne){
         if (colonne != null){
             colonnes.add(colonne);
@@ -35,7 +39,18 @@ public class Projet {
         }
     }
 
-    public void afficher() {
+    public ArrayList<TacheAbstraite> getTache() {
+        ArrayList<TacheAbstraite> tache = new ArrayList<>();
+        for (int i = 0; i < colonnes.size(); i++) {
+            Colonne colonne = colonnes.get(i);
+            for (TacheAbstraite t : colonne.getTaches()){
+                tache.add(t);
+            }
+        }
+        return tache;
+    }
+
+    public void afficher(String indient) {
         System.out.println("========================================================");
         System.out.println(" PROJET #" + id + ": " + nom + " : " + dateCreation);
         System.out.println("========================================================");
@@ -44,7 +59,7 @@ public class Projet {
             System.out.println("(Aucune colonne)");
         } else {
             for (Colonne colonne : colonnes) {
-                System.out.println(colonne.afficher());
+                System.out.println(colonne.afficher(indient));
             }
         }
     }
