@@ -1,4 +1,4 @@
-module org.example.sae3_01 {
+module application {
     requires javafx.controls;
     requires javafx.fxml;
 
@@ -6,6 +6,6 @@ module org.example.sae3_01 {
     requires com.dlsc.formsfx;
     requires org.kordamp.bootstrapfx.core;
 
-    opens org.example.sae3_01 to javafx.fxml;
-    exports org.example.sae3_01;
+    opens application to javafx.fxml;
+    exports application;
 }
