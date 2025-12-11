@@ -30,9 +30,9 @@ public class Colonne {
     }
 
     public String afficher(){
-        String s = "--- Colonne : " + nom + " ---\n";
+        String s = "--- Colonne : " + nom + " ---";
         for(TacheAbstraite ta : taches){
-            s += ta;
+            s += ta.afficher();
         }
         return s;
     }
