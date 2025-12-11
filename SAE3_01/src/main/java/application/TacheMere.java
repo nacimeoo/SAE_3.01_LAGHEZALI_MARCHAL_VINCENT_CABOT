@@ -10,20 +10,14 @@ public class TacheMere extends TacheAbstraite {
 
     @Override
     public boolean ajouterDependance(TacheAbstraite t) {
-        if (t instanceof SousTache) {;
-            dependance.add((SousTache) t);
-            return true;
-        }
-        return false;
+        dependance.add((SousTache) t);
+        return true;
     }
 
     @Override
     public boolean supprimerDependance(TacheAbstraite t) {
-        if (t instanceof SousTache) {;
-            dependance.remove((SousTache) t);
-            return true;
-        }
-        return false;
+        dependance.remove((SousTache) t);
+        return true;
     }
 
     @Override
