@@ -26,6 +26,15 @@ public class Projet {
         colonnes.remove(idColonne);
     }
 
+    public void deplacerTache(int idColonneSource, int idColonneDestination, TacheAbstraite tache) {
+        Colonne colonneSource = colonnes.get(idColonneSource);
+        Colonne colonneDestination = colonnes.get(idColonneDestination);
+        if (colonneSource != null && colonneDestination != null && tache != null) {
+            colonneSource.supprimerTache(tache);
+            colonneDestination.ajouterTache(tache);
+        }
+    }
+
     public void afficher() {
         System.out.println("========================================================");
         System.out.println(" PROJET #" + id + ": " + nom + " : " + dateCreation);
