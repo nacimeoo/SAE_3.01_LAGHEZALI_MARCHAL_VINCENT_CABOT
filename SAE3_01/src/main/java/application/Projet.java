@@ -35,7 +35,7 @@ public class Projet {
             System.out.println("(Aucune colonne)");
         } else {
             for (Colonne colonne : colonnes) {
-                colonne.afficher();
+                System.out.println(colonne.afficher());
             }
         }
     }

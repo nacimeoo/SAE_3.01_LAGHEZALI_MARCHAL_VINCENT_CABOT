@@ -1,5 +1,6 @@
 package application;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class Colonne {
@@ -9,6 +10,7 @@ public class Colonne {
 
     public Colonne(String nom) {
         this.nom = nom;
+        this.taches = new ArrayList<>();
     }
 
     public void ajouterTache(TacheAbstraite ta){
