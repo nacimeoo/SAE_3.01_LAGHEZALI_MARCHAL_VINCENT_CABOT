@@ -81,4 +81,12 @@ public abstract class TacheAbstraite {
     public void setEtat(String etat) {
         this.etat = etat;
     }
+
+    public abstract boolean ajouter();
+
+    public abstract boolean supprimer();
+
+    public abstract void afficher();
+
+
 }
