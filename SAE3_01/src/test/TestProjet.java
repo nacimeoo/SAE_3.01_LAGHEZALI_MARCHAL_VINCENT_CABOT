@@ -2,11 +2,10 @@ import application.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import java.util.Date;
-import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Classe de test pour la classe Projet.
+ * Classe de test pour la classe Projet
  */
 class TestProjet {
 
@@ -16,7 +15,7 @@ class TestProjet {
     private SousTache tache;
 
     /**
-     * Initialisation d'un projet vide et de deux colonnes avant chaque test.
+     * Initialisation d'un projet vide et de deux colonnes avant chaque test
      */
     @BeforeEach
     void setUp() {
@@ -27,7 +26,7 @@ class TestProjet {
     }
 
     /**
-     * Vérifie que le projet est bien instancié avec une liste de colonnes vide au départ.
+     * Vérifie que le projet est bien instancié avec une liste de colonnes vide au départ
      */
     @Test
     void testConstructeur() {
@@ -35,7 +34,7 @@ class TestProjet {
     }
 
     /**
-     * Teste l'ajout de colonnes.
+     * Teste l'ajout de colonnes
      */
     @Test
     void testAjouterColonneOK() {
@@ -45,7 +44,7 @@ class TestProjet {
     }
 
     /**
-     * Teste la suppression d'une colonne.
+     * Teste la suppression d'une colonne
      */
     @Test
     void testSupprimerColonneOK() {
@@ -59,7 +58,7 @@ class TestProjet {
     }
 
     /**
-     * Vérifie le déplacement d'une tâche.
+     * Vérifie le déplacement d'une tâche
      */
     @Test
     void testDeplacerTacheOK() {

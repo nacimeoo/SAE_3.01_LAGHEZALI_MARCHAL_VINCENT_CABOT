@@ -3,12 +3,12 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Classe de test pour la hiérarchie des tâches (Composite Pattern).
+ * Classe de test pour la hiérarchie des tâches (Composite Pattern)
  */
 class TacheTest {
 
     /**
-     * Vérifie qu'une SousTache agit comme une "feuille" :
+     * Vérifie qu'une SousTache agit comme une "feuille"
      */
     @Test
     void testSousTache() {
@@ -21,7 +21,7 @@ class TacheTest {
     }
 
     /**
-     * Vérifie l'ajout d'une dépendance :
+     * Vérifie l'ajout d'une dépendance
      */
     @Test
     void testTacheMereAjoutDependanceOK() {
@@ -36,7 +36,7 @@ class TacheTest {
     }
 
     /**
-     * Vérifie la suppression d'une dépendance.
+     * Vérifie la suppression d'une dépendance
      */
     @Test
     void testTacheMereSuppressionDependanceOK() {
