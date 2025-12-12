@@ -8,4 +8,6 @@ module application {
 
     opens application to javafx.fxml;
     exports application;
+    exports application.vue;
+    opens application.vue to javafx.fxml;
 }
