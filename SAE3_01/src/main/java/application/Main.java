@@ -96,6 +96,8 @@ public class Main {
                         System.out.println("1 - Ajouter une dépendance (si tâche mère)");
                         System.out.println("2 - Déplacer la tâche vers une autre colonne");
                         System.out.println("3 - Supprimer la tâche");
+                        System.out.println("4 - Changer l'état de la tâche");
+                        System.out.println("5 - Voir état");
                         System.out.println("0 - Retour");
 
                         int choixT = sc.nextInt();
@@ -152,7 +154,50 @@ public class Main {
                                 menuTache = false;
                                 break;
 
+                            case 4:
+                                boolean menuEtat = true;
+                                while (menuEtat) {
+                                    System.out.println("\n--- Changement de l'état de la tâche \"" + tacheSelectionnee.getNom() + " qui est " + tacheSelectionnee.getEtat() +"\" ---");
+                                    System.out.println("1 - A faire");
+                                    System.out.println("2 - En cours");
+                                    System.out.println("3 - Terminer");
+                                    System.out.println("4 - En attente");
+                                    System.out.println("0 - Retour");
 
+                                    int choixEtat = sc.nextInt();
+
+                                    switch (choixEtat) {
+                                        case 1:
+                                            tacheSelectionnee.setEtat("A faire");
+                                            menuEtat = false;
+                                            break;
+                                        case 2:
+                                            if (!tacheSelectionnee.verifierDependance()) {
+                                                System.out.println("Attention cette tâche nécéssite la finission d'une autre tâche avant");
+                                                projet.afficher("   ");
+                                            }
+                                            tacheSelectionnee.setEtat("En cours");
+                                            menuEtat = false;
+                                            break;
+                                        case 3:
+                                            tacheSelectionnee.setEtat("Terminer");
+                                            menuEtat = false;
+                                            break;
+                                        case 4:
+                                            tacheSelectionnee.setEtat("En attente");
+                                            menuEtat = false;
+                                            break;
+                                        default:
+                                            System.out.println("Option invalide.");
+                                            break;
+                                    }
+
+                                }
+                                System.out.println("L'état à bien été modifié");
+                                break;
+                            case 5:
+                                System.out.println("L'état de la tâche est : " + tacheSelectionnee.getEtat());
+                                break;
                             case 0:
                                 menuTache = false;
                                 break;

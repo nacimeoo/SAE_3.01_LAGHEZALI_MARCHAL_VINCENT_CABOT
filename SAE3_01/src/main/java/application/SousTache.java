@@ -16,6 +16,10 @@ public class SousTache extends TacheAbstraite {
         return false;
     }
 
+    public boolean verifierDependance() {
+        return false;
+    }
+
     @Override
     public String afficher(String indent) {
         return "\n" + indent + "|- Sous-tâche : " + this.getNom();

@@ -82,6 +82,8 @@ public abstract class TacheAbstraite {
         this.etat = etat;
     }
 
+    public abstract boolean verifierDependance();
+
     public abstract boolean ajouterDependance(TacheAbstraite t);
 
     public abstract boolean supprimerDependance(TacheAbstraite t);

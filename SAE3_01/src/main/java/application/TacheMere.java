@@ -23,6 +23,15 @@ public class TacheMere extends TacheAbstraite {
     }
 
     @Override
+    public boolean verifierDependance() {
+        int cpt =  0;
+        for (TacheAbstraite t : dependance) {
+            cpt++;
+        }
+        return cpt < 0;
+    }
+
+    @Override
     public String afficher(String indent) {
         StringBuilder sb = new StringBuilder();
 
