@@ -26,7 +26,9 @@ public class TacheMere extends TacheAbstraite {
     public boolean verifierDependance() {
         int cpt =  0;
         for (TacheAbstraite t : dependance) {
-            cpt++;
+            if (!t.getEtat().equals("Terminer")){
+                cpt++;
+            }
         }
         return cpt < 0;
     }
