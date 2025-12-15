@@ -9,96 +9,74 @@ public class ControleurTexte {
     private VueTexte vue;
     private boolean run;
 
-    /**
-     * Constructeur du contrôleur.
-     * @param projet Le modèle (peut être null au départ)
-     * @param vue La vue pour les interactions
-     */
     public ControleurTexte(Projet projet, VueTexte vue) {
         this.projet = projet;
         this.vue = vue;
         this.run = true;
     }
 
-    /**
-     * Méthode principale qui lance la boucle de l'application.
-     */
     public void demarrer() {
         vue.afficherMessage("===========================================");
         vue.afficherMessage("=========== BIENVENU SUR FRIDAY ===========");
         vue.afficherMessage("===========================================\n");
 
         while (run) {
-            int action = vue.afficherMenu();
-            traiterAction(action);
+            int choix = vue.afficherMenu();
+            traiterAction(choix);
         }
     }
 
-    /**
-     * Traite le choix de l'utilisateur dans le menu principal.
-     */
     private void traiterAction(int action) {
         switch (action) {
             case 1:
                 String nom = vue.lireChaine("Nom du projet");
                 this.projet = new Projet(1, nom, new Date());
-                vue.afficherMessage("Projet créé.");
+                this.projet.enregistrerObservateur(this.vue);
+                vue.afficherMessage("Projet créé avec succès.");
                 break;
 
             case 2:
-                if (verifierProjetExistant()) {
+                if (projetExiste()) {
                     String nomCol = vue.lireChaine("Nom de la colonne");
                     projet.ajouterColonne(new Colonne(nomCol));
-                    vue.afficherMessage("Colonne ajoutée.");
                 }
                 break;
 
             case 3:
-                if (verifierProjetExistant()) {
-                    vue.afficherMessage("1 - Tâche mère");
-                    vue.afficherMessage("2 - Sous-tâche");
+                if (projetExiste()) {
+                    vue.afficherMessage("1 - Tâche mère\n2 - Sous-tâche");
                     int type = vue.lireEntier();
-
                     String nomT = vue.lireChaine("Nom de la tâche");
 
+                    vue.afficherMessage("Sélectionnez une colonne :");
                     vue.afficherColonnes(projet);
                     int c = vue.lireEntier("Index colonne");
 
-                    if (indexColonneValide(c)) {
-                        TacheAbstraite t = (type == 1)
-                                ? new TacheMere((int)(Math.random()*1000), nomT)
-                                : new SousTache((int)(Math.random()*1000), nomT);
+                    TacheAbstraite t = (type == 1)
+                            ? new TacheMere((int)(Math.random()*1000), nomT)
+                            : new SousTache((int)(Math.random()*1000), nomT);
 
-                        projet.getColonnes().get(c).ajouterTache(t);
-                        vue.afficherMessage("Tâche ajoutée.");
-                    } else {
-                        vue.afficherMessage("Index de colonne invalide.");
-                    }
+                    projet.ajouterTacheDansColonne(t, c);
                 }
                 break;
 
             case 4:
-                if (verifierProjetExistant()) {
-                    gererSelectionTache();
+                if (projetExiste()) {
+                    gererMenuTache();
                 }
                 break;
 
             case 5:
-                if (verifierProjetExistant()) {
+                if (projetExiste()) {
                     vue.afficherColonnes(projet);
-                    int delC = vue.lireEntier("Index colonne à supprimer");
-                    if (indexColonneValide(delC)) {
-                        projet.supprimerColonne(delC);
-                        vue.afficherMessage("Colonne supprimée.");
-                    } else {
-                        vue.afficherMessage("Index invalide.");
-                    }
+                    int c = vue.lireEntier("Index colonne à supprimer");
+                    projet.supprimerColonne(c);
                 }
                 break;
 
             case 6:
-                if (verifierProjetExistant()) {
-                    vue.afficherProjet(projet);
+                if (projetExiste()) {
+                    projet.afficher("  ");
                 }
                 break;
 
@@ -112,174 +90,109 @@ public class ControleurTexte {
         }
     }
 
-    /**
-     * Gère toute la logique du menu "Sélectionner tâche" (Case 4).
-     */
-    private void gererSelectionTache() {
-        vue.afficherMessage("Sélection d'une tâche :");
+    private void gererMenuTache() {
         vue.afficherColonnes(projet);
-        int colSel = vue.lireEntier("Colonne de la tâche");
+        int colSel = vue.lireEntier("Choisir colonne");
 
-        if (!indexColonneValide(colSel)) {
-            vue.afficherMessage("Colonne invalide.");
-            return;
-        }
-
-        int nbTache = projet.getColonnes().get(colSel).getTaches().size();
-        if (nbTache == 0) {
-            vue.afficherMessage("Il n'y a pas de tâche assignée à cette colonne");
-            return;
-        }
+        if (!indexValide(colSel)) { vue.afficherMessage("Index colonne invalide"); return; }
+        if (projet.getColonnes().get(colSel).getTaches().isEmpty()) { vue.afficherMessage("Aucune tâche ici."); return; }
 
         vue.afficherTaches(projet, colSel);
-        int tSel = vue.lireEntier("Index tâche");
+        int tSel = vue.lireEntier("Choisir tâche");
 
-        if (tSel < 0 || tSel >= nbTache) {
-            vue.afficherMessage("Index de tâche invalide.");
+        if (tSel < 0 || tSel >= projet.getColonnes().get(colSel).getTaches().size()) {
+            vue.afficherMessage("Index tâche invalide");
             return;
         }
 
-        TacheAbstraite tacheSelectionnee = projet.getColonnes().get(colSel).getTaches().get(tSel);
+        TacheAbstraite laTache = projet.getColonnes().get(colSel).getTaches().get(tSel);
+        boolean sousMenu = true;
 
-        boolean menuTache = true;
-        while (menuTache) {
-            vue.afficherMessage("\n--- Actions sur la tâche \"" + tacheSelectionnee.getNom() + "\" ---");
-            vue.afficherMessage("1 - Ajouter une dépendance (si tâche mère)");
-            vue.afficherMessage("2 - Déplacer la tâche vers une autre colonne");
-            vue.afficherMessage("3 - Supprimer la tâche");
-            vue.afficherMessage("4 - Changer l'état de la tâche");
-            vue.afficherMessage("5 - Voir état");
+        while (sousMenu) {
+            vue.afficherMessage("\n--- TACHE : " + laTache.getNom() + " (" + laTache.getEtat() + ") ---");
+            vue.afficherMessage("1 - Ajouter dépendance (si Mère)");
+            vue.afficherMessage("2 - Déplacer");
+            vue.afficherMessage("3 - Supprimer");
+            vue.afficherMessage("4 - Changer état");
             vue.afficherMessage("0 - Retour");
 
-            int choixT = vue.lireEntier();
+            int choix = vue.lireEntier();
 
-            switch (choixT) {
+            switch (choix) {
                 case 1:
-                    if (!(tacheSelectionnee instanceof TacheMere)) {
-                        vue.afficherMessage("Cette tâche n'est pas une tâche mère !");
-                        break;
-                    }
-
-                    int cpt = 0;
-                    for (TacheAbstraite tache : projet.getTache()) {
-                        if (tache instanceof SousTache){
-                            cpt++;
-                        }
-                    }
-                    if (cpt == 0) {
-                        vue.afficherMessage("Il n'y a pas de SousTache créée");
-                        break;
-                    }
-
-                    vue.afficherMessage("Sélectionner la sous-tâche à ajouter :");
-                    vue.afficherColonnes(projet);
-                    int colDep = vue.lireEntier("Colonne source");
-
-                    if (indexColonneValide(colDep)) {
-                        vue.afficherTaches(projet, colDep);
-                        int tDep = vue.lireEntier("Index tâche");
-
-                        if (tDep >= 0 && tDep < projet.getColonnes().get(colDep).getTaches().size()) {
-                            TacheAbstraite sousT = projet.getColonnes().get(colDep).getTaches().get(tDep);
-                            ((TacheMere) tacheSelectionnee).ajouterDependance(sousT);
-                            vue.afficherMessage("Dépendance ajoutée !");
-                        } else {
-                            vue.afficherMessage("Index tâche invalide.");
-                        }
+                    if (laTache instanceof TacheMere) {
+                        ajouterDependance((TacheMere) laTache);
+                    } else {
+                        vue.afficherMessage("Impossible : ce n'est pas une tâche mère.");
                     }
                     break;
-
                 case 2:
-                    vue.afficherMessage("Déplacer vers quelle colonne ?");
                     vue.afficherColonnes(projet);
-                    int newCol = vue.lireEntier();
-
-                    if (indexColonneValide(newCol)) {
-                        projet.deplacerTache(colSel, newCol, tacheSelectionnee);
-                        vue.afficherMessage("Tâche déplacée !");
-                        menuTache = false;
-                    }
+                    int newCol = vue.lireEntier("Vers colonne index");
+                    projet.deplacerTache(colSel, newCol, laTache);
+                    sousMenu = false; // On sort car l'index a changé
                     break;
-
                 case 3:
-                    projet.getColonnes().get(colSel).supprimerTache(tacheSelectionnee);
-                    vue.afficherMessage("Tâche supprimée !");
-                    menuTache = false;
+                    projet.supprimerTacheDeColonne(laTache, colSel);
+                    sousMenu = false;
                     break;
-
                 case 4:
-                    gererChangementEtat(tacheSelectionnee);
+                    changerEtat(laTache);
                     break;
-
-                case 5:
-                    vue.afficherMessage("L'état de la tâche est : " + tacheSelectionnee.getEtat());
-                    break;
-
                 case 0:
-                    menuTache = false;
+                    sousMenu = false;
                     break;
-
                 default:
-                    vue.afficherMessage("Option invalide.");
+                    vue.afficherMessage("Invalide.");
             }
         }
     }
 
-    /**
-     * Gère le sous-menu de changement d'état.
-     */
-    private void gererChangementEtat(TacheAbstraite tacheSelectionnee) {
-        boolean menuEtat = true;
-        while (menuEtat) {
-            vue.afficherMessage("\n--- Changement de l'état de la tâche \"" + tacheSelectionnee.getNom() + " qui est " + tacheSelectionnee.getEtat() +"\" ---");
-            vue.afficherMessage("1 - A faire");
-            vue.afficherMessage("2 - En cours");
-            vue.afficherMessage("3 - Terminer");
-            vue.afficherMessage("4 - En attente");
-            vue.afficherMessage("0 - Retour");
+    private void ajouterDependance(TacheMere mere) {
+        vue.afficherMessage("Selectionnez la colonne de la sous-tâche cible :");
+        vue.afficherColonnes(projet);
+        int c = vue.lireEntier();
+        if(!indexValide(c)) return;
 
-            int choixEtat = vue.lireEntier();
+        vue.afficherTaches(projet, c);
+        int t = vue.lireEntier("Index de la sous-tâche");
 
-            switch (choixEtat) {
-                case 1:
-                    tacheSelectionnee.setEtat("A faire");
-                    menuEtat = false;
-                    break;
-                case 2:
-                    if (!tacheSelectionnee.verifierDependance()) {
-                        vue.afficherMessage("Attention cette tâche nécessite la finission d'une autre tâche avant");
-                    }
-                    tacheSelectionnee.setEtat("En cours");
-                    menuEtat = false;
-                    break;
-                case 3:
-                    tacheSelectionnee.setEtat("Terminer");
-                    menuEtat = false;
-                    break;
-                case 4:
-                    tacheSelectionnee.setEtat("En attente");
-                    menuEtat = false;
-                    break;
-                case 0:
-                    menuEtat = false;
-                    break;
-                default:
-                    vue.afficherMessage("Option invalide.");
-                    break;
-            }
+        var col = projet.getColonnes().get(c);
+        if (t >= 0 && t < col.getTaches().size()) {
+            TacheAbstraite cible = col.getTaches().get(t);
+            projet.ajouterDependanceTache(mere, cible);
+            vue.afficherMessage("Dépendance ajoutée.");
         }
-        vue.afficherMessage("L'état a bien été modifié");
     }
 
-    private boolean verifierProjetExistant() {
+    private void changerEtat(TacheAbstraite t) {
+        vue.afficherMessage("1- A faire, 2- En cours, 3- Terminer, 4- En attente");
+        int e = vue.lireEntier();
+        String etat = switch(e) {
+            case 1 -> "A faire";
+            case 2 -> "En cours";
+            case 3 -> "Terminer";
+            case 4 -> "En attente";
+            default -> null;
+        };
+
+        if (etat != null) {
+            if (etat.equals("En cours") && !t.verifierDependance()) {
+                vue.afficherMessage("⚠ Attention : Dépendances non terminées !");
+            }
+            projet.changerEtatTache(t, etat);
+        }
+    }
+
+    private boolean projetExiste() {
         if (projet == null) {
-            vue.afficherMessage("⚠ Aucun projet n’a encore été créé.");
+            vue.afficherMessage("⚠ Aucun projet créé.");
             return false;
         }
         return true;
     }
 
-    private boolean indexColonneValide(int index) {
-        return index >= 0 && index < projet.getColonnes().size();
+    private boolean indexValide(int i) {
+        return projet != null && i >= 0 && i < projet.getColonnes().size();
     }
 }
