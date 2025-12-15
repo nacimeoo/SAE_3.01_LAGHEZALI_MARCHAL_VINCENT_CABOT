@@ -1,8 +1,9 @@
 package application;
 
+import java.util.ArrayList;
 import java.util.Date;
 
-public abstract class TacheAbstraite {
+public abstract class TacheAbstraite{
     protected int id;
     protected String nom;
     protected String description;
@@ -11,6 +12,7 @@ public abstract class TacheAbstraite {
     protected Date dateFin;
     protected int dureeEstimee;
     protected String etat;
+
 
     public TacheAbstraite(int id, String nom) {
         this.id = id;
