@@ -20,12 +20,10 @@ class TestProjetDAO {
         p.setId()
         projetDAO.save(p);
 
-        // 2. Récupération (SELECT)
         Projet recupere = projetDAO.getProjetById(p.getId());
         Assertions.assertNotNull(recupere, "Le projet devrait être trouvé en base");
         Assertions.assertEquals("Projet Test Integration", recupere.getNom());
 
-        // 3. Modification (UPDATE)
         p.setNom("Projet Modifié");
 
         // 4. Suppression (DELETE)
