@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Colonne {
-
+    protected int id;
     protected String nom;
     protected List<TacheAbstraite> taches;
 
@@ -12,7 +12,9 @@ public class Colonne {
         this.nom = nom;
         this.taches = new ArrayList<>();
     }
-
+    public void setId(int id) {
+        this.id = id;
+    }
     public void ajouterTache(TacheAbstraite ta){
         taches.add(ta);
     }

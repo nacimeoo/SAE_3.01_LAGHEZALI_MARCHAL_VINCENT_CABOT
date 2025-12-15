@@ -65,4 +65,15 @@ public class Projet {
     }
 
 
+    public int getId() {
+        return id;
+    }
+
+    public String getNom() {
+        return nom;
+    }
+
+    public Date getDateCreation() {
+        return dateCreation;
+    }
 }

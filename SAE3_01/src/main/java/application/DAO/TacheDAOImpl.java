@@ -5,6 +5,7 @@ import application.TacheAbstraite;
 import application.TacheMere;
 
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Statement;
 import java.util.ArrayList;
@@ -18,8 +19,9 @@ public class TacheDAOImpl implements ITacheDAO {
     public TacheAbstraite getTacheById(int id) throws Exception {
         String sql = "SELECT * FROM Taches WHERE id = ?";
         try (Connection con = DBConnection.getConnection();) {
-            Statement stmt = con.createStatement();
-            ResultSet rs = stmt.executeQuery(sql);
+            PreparedStatement stmt = con.prepareStatement(sql);
+            stmt.setInt(1, id);
+            ResultSet rs = stmt.executeQuery();
             if (rs.next()) {
                 if (rs.getInt("type") == 0) {
                     TacheMere t = new TacheMere(rs.getInt("id"), rs.getString("nom"));
@@ -79,43 +81,59 @@ public class TacheDAOImpl implements ITacheDAO {
         }
     }
 
-    @Override
     public void save(TacheAbstraite tache) throws Exception {
-        boolean exist = false;
-        String sql1 = "Select count(*) as count from Taches where id = " + tache.getId();
-        Statement stmt1 = DBConnection.getConnection().createStatement();
-        ResultSet rs = stmt1.executeQuery(sql1);
-        if (rs != null && rs.next()) {
-            exist = true;
-        }
+        try (Connection con = DBConnection.getConnection()) {
 
-        if (exist) {
-            String sqlUpdate = "UPDATE Taches SET nom = ? WHERE id = ?";
-            try (Connection con = DBConnection.getConnection();) {
-                Statement stmt = con.createStatement();
-                stmt.executeUpdate(sqlUpdate);
-            } catch (Exception e) {
-                throw new Exception("Erreur lors de la mise à jour de la tâche avec l'ID: " + tache.getId(), e);
-            }
-        } else {
-            String sqlInsert = "INSERT INTO Taches (id, nom, type) VALUES (?, ?, ?)";
-            try (Connection con = DBConnection.getConnection();) {
-                Statement stmt = con.createStatement();
-                int type = (tache instanceof TacheMere) ? 0 : 1;
-                stmt.executeUpdate(sqlInsert);
-            } catch (Exception e) {
-                throw new Exception("Erreur lors de l'insertion de la nouvelle tâche", e);
-            }
-        }
+            boolean exist = false;
 
+            String sqlSelect = "SELECT COUNT(*) FROM Taches WHERE id = ?";
+            try (PreparedStatement psSelect = con.prepareStatement(sqlSelect)) {
+                psSelect.setInt(1, tache.getId());
+
+                try (ResultSet rs = psSelect.executeQuery()) {
+                    if (rs.next()) {
+                        exist = rs.getInt(1) > 0;
+                    }
+                }
+            }
+
+            if (exist) {
+                String sqlUpdate = "UPDATE Taches SET nom = ? WHERE id = ?";
+                try (PreparedStatement psUpdate = con.prepareStatement(sqlUpdate)) {
+                    psUpdate.setString(1, tache.getNom());
+                    psUpdate.setInt(2, tache.getId());
+                    psUpdate.executeUpdate();
+                } catch (Exception e) {
+                    throw new Exception("Erreur lors de la mise à jour de la tâche avec l'ID: " + tache.getId(), e);
+                }
+            } else {String sqlInsert = "INSERT INTO Taches (nom, type) VALUES (?, ?)";
+                try (PreparedStatement psInsert = con.prepareStatement(sqlInsert)) {
+                    int type = (tache instanceof TacheMere) ? 0 : 1;
+
+                    psInsert.setString(1, tache.getNom());
+                    psInsert.setInt(2, type);
+
+                    psInsert.executeUpdate();
+                } catch (Exception e) {
+                    throw new Exception("Erreur lors de l'insertion de la nouvelle tâche", e);
+                }
+            }
+
+        } catch (Exception e) {
+            throw new Exception("Une erreur générale est survenue lors de l'opération Save.", e);
+        }
     }
 
     @Override
     public void delete(int id) throws Exception {
         String sql = "DELETE FROM Taches WHERE id = " + id;
+        String sql2 = "DELETE FROM colonne2tache WHERE id_tache = " + id;
+        String sql3 = "DELETE FROM tache2etiquette WHERE id_tache = " + id;
         try (Connection con = DBConnection.getConnection();) {
             Statement stmt = con.createStatement();
             stmt.executeUpdate(sql);
+            stmt.executeUpdate(sql2);
+            stmt.executeUpdate(sql3);
         } catch (Exception e) {
             throw new Exception("Erreur lors de la suppression de la tâche avec l'ID: " + id, e);
         }
