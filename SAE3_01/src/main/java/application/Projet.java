@@ -131,4 +131,8 @@ public class Projet implements Sujet {
     public Date getDateCreation() {
         return dateCreation;
     }
+
+    public void setNom(String nom) {
+        this.nom = nom;
+    }
 }

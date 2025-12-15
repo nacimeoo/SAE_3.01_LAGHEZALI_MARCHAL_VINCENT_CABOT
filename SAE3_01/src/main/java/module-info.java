@@ -6,9 +6,12 @@ module application {
     requires com.dlsc.formsfx;
     requires org.kordamp.bootstrapfx.core;
     requires java.sql;
+    requires mysql.connector.j;
+
 
     opens application to javafx.fxml;
     exports application;
     exports application.vue;
     opens application.vue to javafx.fxml;
+    exports application.DAO;
 }
