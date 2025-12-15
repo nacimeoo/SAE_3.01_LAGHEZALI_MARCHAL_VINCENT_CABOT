@@ -20,23 +20,6 @@ public class Projet implements Sujet {
         this.id = id;
     }
 
-    @Override
-    public void enregistrerObservateur(Observateur o) {
-        observateurs.add(o);
-    }
-
-    @Override
-    public void supprimerObservateur(Observateur o) {
-        observateurs.remove(o);
-    }
-
-    @Override
-    public void notifierObservateurs() {
-        for (Observateur o : observateurs) {
-            o.actualiser(this);
-        }
-    }
-
     public void ajouterColonne(Colonne colonne){
         if (colonne != null){
             colonnes.add(colonne);
@@ -130,6 +113,27 @@ public class Projet implements Sujet {
 
     public Date getDateCreation() {
         return dateCreation;
+    }
+
+    @Override
+    public void enregistrerObservateur(Observateur o) {
+        if (!this.observateurs.contains(o)) { // AJOUT DU IF
+            this.observateurs.add(o);
+        }
+    }
+
+    @Override
+    public void supprimerObservateur(Observateur o) {
+        observateurs.remove(o);
+    }
+
+    @Override
+    public void notifierObservateurs() {
+        // AJOUT DE LA COPIE
+        ArrayList<Observateur> copy = new ArrayList<>(this.observateurs);
+        for (Observateur o : copy) {
+            o.actualiser(this);
+        }
     }
 
     public void setNom(String nom) {

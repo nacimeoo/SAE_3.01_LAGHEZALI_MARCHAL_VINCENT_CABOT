@@ -3,7 +3,7 @@ package application;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Colonne {
+public class Colonne{
     protected int id;
     protected String nom;
     protected List<TacheAbstraite> taches;
@@ -48,9 +48,6 @@ public class Colonne {
                 s += t.afficher(indient);
             }
         }
-
         return s;
     }
-
-
 }
