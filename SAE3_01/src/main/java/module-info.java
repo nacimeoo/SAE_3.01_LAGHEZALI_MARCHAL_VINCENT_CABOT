@@ -5,8 +5,9 @@ module application {
     requires org.controlsfx.controls;
     requires com.dlsc.formsfx;
     requires org.kordamp.bootstrapfx.core;
-    requires java.sql;
     requires mysql.connector.j;
+    requires com.zaxxer.hikari;
+    requires java.sql;
 
 
     opens application to javafx.fxml;

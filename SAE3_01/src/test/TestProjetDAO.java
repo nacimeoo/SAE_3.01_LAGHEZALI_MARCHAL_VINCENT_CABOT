@@ -17,8 +17,9 @@ class TestProjetDAO {
     @Test
     void testCycleDeVieProjet() throws Exception {
         Projet p = new Projet("Projet Test Integration", new Date());
-        p.setId()
         projetDAO.save(p);
+
+        Assertions.assertTrue(p.getId() > 0, "L'ID du projet devrait être généré par la BDD");
 
         Projet recupere = projetDAO.getProjetById(p.getId());
         Assertions.assertNotNull(recupere, "Le projet devrait être trouvé en base");
@@ -26,7 +27,6 @@ class TestProjetDAO {
 
         p.setNom("Projet Modifié");
 
-        // 4. Suppression (DELETE)
         projetDAO.delete(p.getId());
         Projet apresSuppression = projetDAO.getProjetById(p.getId());
         Assertions.assertNull(apresSuppression, "Le projet ne devrait plus exister après suppression");

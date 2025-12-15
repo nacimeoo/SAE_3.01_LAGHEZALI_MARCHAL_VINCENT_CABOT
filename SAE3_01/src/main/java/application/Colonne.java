@@ -53,4 +53,7 @@ public class Colonne {
     }
 
 
+    public int getId() {
+        return id;
+    }
 }
