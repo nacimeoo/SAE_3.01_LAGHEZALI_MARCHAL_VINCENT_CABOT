@@ -24,10 +24,15 @@ public class TacheDAOImpl implements ITacheDAO {
             ResultSet rs = stmt.executeQuery();
             if (rs.next()) {
                 if (rs.getInt("type") == 0) {
-                    TacheMere t = new TacheMere(rs.getInt("id"), rs.getString("nom"));
+                    TacheMere t = new TacheMere(rs.getString("nom"));
+                    t.setId(rs.getInt("id"));
+                    return t;
                 } else {
-                    SousTache t = new SousTache(rs.getInt("id"), rs.getString("nom"));
+                    SousTache t = new SousTache(rs.getString("nom"));
+                    t.setId(rs.getInt("id"));
+                    return t;
                 }
+
             }
         } catch (Exception e) {
             throw new Exception("Erreur lors de la récupération de la tâche avec l'ID: " + id, e);
@@ -44,10 +49,12 @@ public class TacheDAOImpl implements ITacheDAO {
             ResultSet rs = stmt.executeQuery(sql);
             while (rs.next()) {
                 if (rs.getInt("type") == 0) {
-                    TacheMere t = new TacheMere(rs.getInt("id"), rs.getString("nom"));
+                    TacheMere t = new TacheMere(rs.getString("nom"));
+                    t.setId(rs.getInt("id"));
                     taches.add(t);
                 } else {
-                    SousTache t = new SousTache(rs.getInt("id"), rs.getString("nom"));
+                    SousTache t = new SousTache(rs.getString("nom"));
+                    t.setId(rs.getInt("id"));
                     taches.add(t);
                 }
             }
@@ -68,10 +75,12 @@ public class TacheDAOImpl implements ITacheDAO {
             ResultSet rs = stmt.executeQuery(sql);
             while (rs.next()) {
                 if (rs.getInt("type") == 0) {
-                    TacheMere t = new TacheMere(rs.getInt("id"), rs.getString("nom"));
+                    TacheMere t = new TacheMere(rs.getString("nom"));
+                    t.setId(rs.getInt("id"));
                     taches.add(t);
                 } else {
-                    SousTache t = new SousTache(rs.getInt("id"), rs.getString("nom"));
+                    SousTache t = new SousTache(rs.getString("nom"));
+                    t.setId(rs.getInt("id"));
                     taches.add(t);
                 }
             }

@@ -19,10 +19,12 @@ class TestProjet {
      */
     @BeforeEach
     void setUp() {
-        projet = new Projet(1, "Mon Projet", new Date());
+        projet = new Projet("Mon Projet", new Date());
+        projet.setId(1);
         colSource = new Colonne("A faire");
         colDestination = new Colonne("En cours");
-        tache = new SousTache(10, "Dev");
+        tache = new SousTache("Dev");
+        tache.setId(10);
     }
 
     /**

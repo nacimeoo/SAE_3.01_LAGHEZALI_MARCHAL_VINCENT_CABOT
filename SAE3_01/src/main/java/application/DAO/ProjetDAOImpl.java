@@ -19,7 +19,9 @@ public class ProjetDAOImpl implements IProjetDAO {
             stmt.setInt(1, id);
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
-                    return new Projet(rs.getInt("id"), rs.getString("nom"), rs.getDate("date"));
+                    Projet projet = new Projet(rs.getString("nom"), rs.getDate("date"));
+                    projet.setId(rs.getInt("id"));
+                    return projet;
                 } else {
                     return null;
                 }
@@ -39,7 +41,8 @@ public class ProjetDAOImpl implements IProjetDAO {
             Statement stmt = conn.createStatement();
             try (ResultSet rs = stmt.executeQuery(sql)) {
                 while (rs.next()) {
-                    Projet projet = new Projet(rs.getInt("id"), rs.getString("nom"), rs.getDate("date"));
+                    Projet projet = new Projet(rs.getString("nom"), rs.getDate("date"));
+                    projet.setId(rs.getInt("id"));
                     projets.add(projet);
                 }
                 return projets;

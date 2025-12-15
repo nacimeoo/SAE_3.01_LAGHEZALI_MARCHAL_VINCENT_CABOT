@@ -10,12 +10,16 @@ public class Projet implements Sujet {
     private ArrayList<Colonne> colonnes;
     private ArrayList<Observateur> observateurs = new ArrayList<>();
 
-    public Projet(int id, String nom, Date dateCreation) {
-        this.id = id;
+    public Projet(String nom, Date dateCreation) {
         this.nom = nom;
         this.dateCreation = dateCreation;
         this.colonnes = new ArrayList<>();
     }
+
+    public void setId(int id) {
+        this.id = id;
+    }
+
     @Override
     public void enregistrerObservateur(Observateur o) {
         observateurs.add(o);
