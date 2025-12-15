@@ -1,8 +1,9 @@
 package application;
 
+import java.util.ArrayList;
 import java.util.Date;
 
-public abstract class TacheAbstraite {
+public abstract class TacheAbstraite implements Sujet{
     protected int id;
     protected String nom;
     protected String description;
@@ -11,6 +12,8 @@ public abstract class TacheAbstraite {
     protected Date dateFin;
     protected int dureeEstimee;
     protected String etat;
+    protected ArrayList<Observateur> observateurs;
+
 
     public TacheAbstraite(int id, String nom) {
         this.id = id;
@@ -80,6 +83,28 @@ public abstract class TacheAbstraite {
 
     public void setEtat(String etat) {
         this.etat = etat;
+    }
+
+    @Override
+    public void enregistrerObservateur(Observateur o) {
+        this.observateurs.add(o);
+
+    }
+
+    @Override
+    public void supprimerObservateur(Observateur o) {
+        int i = this.observateurs.indexOf(o);
+        if (i >= 0) {
+            this.observateurs.remove(i);
+        }
+    }
+
+    @Override
+    public void notifierObservateurs() {
+        for (int i = 0; i < this.observateurs.size(); i++) {
+            Observateur observer = this.observateurs.get(i);
+            observer.actualiser(this);
+        }
     }
 
     public abstract boolean verifierDependance();
