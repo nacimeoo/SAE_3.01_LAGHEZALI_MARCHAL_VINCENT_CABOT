@@ -12,7 +12,8 @@ class TestProjet {
     private Projet projet;
     private Colonne colSource;
     private Colonne colDestination;
-    private SousTache tache;
+    private SousTache  tache;
+    private boolean observerNotifier;
 
     /**
      * Initialisation d'un projet vide et de deux colonnes avant chaque test
@@ -23,6 +24,9 @@ class TestProjet {
         colSource = new Colonne("A faire");
         colDestination = new Colonne("En cours");
         tache = new SousTache(10, "Dev");
+
+        observerNotifier = false;
+        projet.enregistrerObservateur(s -> observerNotifier = true);
     }
 
     /**
@@ -71,5 +75,78 @@ class TestProjet {
         assertFalse(colSource.getTaches().contains(tache), "La tâche doit être retirée de la source");
         assertTrue(colDestination.getTaches().contains(tache), "La tâche doit être présente dans la destination");
     }
+
+    @Test
+    void testAjouterTacheDansColonne() {
+        projet.ajouterColonne(colSource);
+        observerNotifier = false;
+
+        projet.ajouterTacheDansColonne(tache, 0);
+
+        assertTrue(colSource.getTaches().contains(tache));
+        assertTrue(observerNotifier);
+    }
+
+    /**
+     * Teste la suppression d'une tâche via le projet et la notification.
+     */
+    @Test
+    void testSupprimerTacheDeColonne() {
+        projet.ajouterColonne(colSource);
+        projet.ajouterTacheDansColonne(tache, 0);
+
+        observerNotifier = false;
+
+        projet.supprimerTacheDeColonne(tache, 0);
+
+        assertTrue(colSource.getTaches().isEmpty());
+        assertTrue(observerNotifier);
+    }
+
+    /**
+     * Vérifie le changement d'état et la notification MVC
+     */
+    @Test
+    void testChangerEtatTache() {
+        projet.ajouterColonne(colSource);
+        projet.ajouterTacheDansColonne(tache, 0);
+
+        observerNotifier = false;
+
+        projet.changerEtatTache(tache, "Terminer");
+
+        assertEquals("Terminer", tache.getEtat());
+        assertTrue(observerNotifier);
+    }
+
+    /**
+     * Teste l'ajout de dépendance entre une tâche mère et une sous-tâche.
+     */
+    @Test
+    void testAjouterDependanceTache() {
+        TacheMere mere = new TacheMere(100, "Big Task");
+        SousTache fille = new SousTache(101, "Small Task");
+
+        projet.ajouterColonne(colSource);
+        projet.ajouterTacheDansColonne(mere, 0);
+        projet.ajouterTacheDansColonne(fille, 0);
+
+
+        boolean succes = projet.ajouterDependanceTache(mere, fille);
+
+        assertTrue(succes);
+    }
+
+    /**
+     * Vérifie qu'on ne peut pas ajouter une colonne nulle.
+     */
+    @Test
+    void testAjouterColonneNull() {
+        projet.ajouterColonne(null);
+
+        assertTrue(projet.getColonnes().isEmpty());
+    }
+
+
 
 }
