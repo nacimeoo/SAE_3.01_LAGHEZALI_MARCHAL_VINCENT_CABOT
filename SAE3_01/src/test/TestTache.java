@@ -49,4 +49,14 @@ class TacheTest {
         String affichage = mere.afficher("");
         assertFalse(affichage.contains("Partie 1"));
     }
+
+    /**
+     * Teste le changement d'état
+     */
+    @Test
+    void testChangerEtat() {
+        SousTache st = new SousTache(1, "Petite tâche");
+        st.setEtat("En cours");
+        assertEquals("En cours", st.getEtat());
+    }
 }
