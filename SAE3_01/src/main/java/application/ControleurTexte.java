@@ -30,7 +30,8 @@ public class ControleurTexte {
         switch (action) {
             case 1:
                 String nom = vue.lireChaine("Nom du projet");
-                this.projet = new Projet(1, nom, new Date());
+                this.projet = new Projet(nom, new Date());
+                projet.setId(1);
                 this.projet.enregistrerObservateur(this.vue);
                 vue.afficherMessage("Projet créé avec succès.");
                 break;
@@ -53,8 +54,9 @@ public class ControleurTexte {
                     int c = vue.lireEntier("Index colonne");
 
                     TacheAbstraite t = (type == 1)
-                            ? new TacheMere((int)(Math.random()*1000), nomT)
-                            : new SousTache((int)(Math.random()*1000), nomT);
+                            ? new TacheMere(nomT)
+
+                            : new SousTache(nomT);
 
                     projet.ajouterTacheDansColonne(t, c);
                 }

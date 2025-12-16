@@ -2,8 +2,8 @@ package application;
 
 public class SousTache extends TacheAbstraite {
 
-    public SousTache(int id, String nom) {
-        super(id, nom);
+    public SousTache(String nom) {
+        super(nom);
     }
 
     @Override

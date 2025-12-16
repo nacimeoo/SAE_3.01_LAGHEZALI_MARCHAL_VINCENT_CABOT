@@ -14,8 +14,7 @@ public abstract class TacheAbstraite{
     protected String etat;
 
 
-    public TacheAbstraite(int id, String nom) {
-        this.id = id;
+    public TacheAbstraite(String nom) {
         this.nom = nom;
         this.etat = "A faire";
     }

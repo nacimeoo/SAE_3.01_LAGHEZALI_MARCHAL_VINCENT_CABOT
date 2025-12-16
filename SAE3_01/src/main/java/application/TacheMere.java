@@ -6,8 +6,8 @@ public class TacheMere extends TacheAbstraite {
 
     ArrayList<TacheAbstraite> dependance = new ArrayList<>();
 
-    public TacheMere(int id, String nom) {
-        super(id, nom);
+    public TacheMere(String nom) {
+        super(nom);
     }
 
     @Override

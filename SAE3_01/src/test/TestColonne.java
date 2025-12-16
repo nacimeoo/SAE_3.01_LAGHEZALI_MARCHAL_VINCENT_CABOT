@@ -14,7 +14,8 @@ class TestColonne {
     @BeforeEach
     void setUp() {
         colonne = new Colonne("A faire");
-        t = new SousTache(50, "Conception");
+        t = new SousTache("Conception");
+        t.setId(50);
     }
 
     /**
@@ -44,8 +45,10 @@ class TestColonne {
      */
     @Test
     void testAfficher() {
-        TacheMere mere = new TacheMere(1, "Dev");
-        SousTache fille = new SousTache(2, "Analyse");
+        TacheMere mere = new TacheMere("Dev");
+        mere.setId(1);
+        SousTache fille = new SousTache("Analyse");
+        mere.setId(2);
 
         mere.ajouterDependance(fille);
 

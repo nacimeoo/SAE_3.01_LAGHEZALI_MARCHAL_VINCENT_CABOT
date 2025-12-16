@@ -10,27 +10,14 @@ public class Projet implements Sujet {
     private ArrayList<Colonne> colonnes;
     private ArrayList<Observateur> observateurs = new ArrayList<>();
 
-    public Projet(int id, String nom, Date dateCreation) {
-        this.id = id;
+    public Projet(String nom, Date dateCreation) {
         this.nom = nom;
         this.dateCreation = dateCreation;
         this.colonnes = new ArrayList<>();
     }
-    @Override
-    public void enregistrerObservateur(Observateur o) {
-        observateurs.add(o);
-    }
 
-    @Override
-    public void supprimerObservateur(Observateur o) {
-        observateurs.remove(o);
-    }
-
-    @Override
-    public void notifierObservateurs() {
-        for (Observateur o : observateurs) {
-            o.actualiser(this);
-        }
+    public void setId(int id) {
+        this.id = id;
     }
 
     public void ajouterColonne(Colonne colonne){
@@ -126,5 +113,30 @@ public class Projet implements Sujet {
 
     public Date getDateCreation() {
         return dateCreation;
+    }
+
+    @Override
+    public void enregistrerObservateur(Observateur o) {
+        if (!this.observateurs.contains(o)) { // AJOUT DU IF
+            this.observateurs.add(o);
+        }
+    }
+
+    @Override
+    public void supprimerObservateur(Observateur o) {
+        observateurs.remove(o);
+    }
+
+    @Override
+    public void notifierObservateurs() {
+        // AJOUT DE LA COPIE
+        ArrayList<Observateur> copy = new ArrayList<>(this.observateurs);
+        for (Observateur o : copy) {
+            o.actualiser(this);
+        }
+    }
+
+    public void setNom(String nom) {
+        this.nom = nom;
     }
 }
