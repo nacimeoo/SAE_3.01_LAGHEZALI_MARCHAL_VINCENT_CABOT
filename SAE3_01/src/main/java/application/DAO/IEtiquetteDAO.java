@@ -1,13 +1,17 @@
 package application.DAO;
 
+import application.Etiquette;
+
 import java.util.List;
 
 public interface IEtiquetteDAO {
-    // A compléter avec la classe Etiquette
+
+    Etiquette getEtiquetteById(int id, int id_tache) throws Exception;
+    List<Etiquette> getAllEtiquettes() throws Exception;
+
+    void save(Etiquette etiquette) throws Exception;
+
     void delete(int id) throws Exception;
-
-
-
-    List<String> getEtiquettesByTacheId(int tacheId) throws Exception;
+    List<Etiquette> getEtiquettesByTacheId(int tacheId) throws Exception;
 
 }
