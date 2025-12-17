@@ -1,15 +1,16 @@
 package application.vue;
 
-import application.controller.ControleurAjouterTache;
-import application.controller.ControleurSupprimerTache;
-import application.controller.ControleurDeplacerTache; // Nouveau !
+import application.Colonne;
+import application.controller.*;
 import application.*;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.SnapshotParameters;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
+import javafx.scene.input.*;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
@@ -18,6 +19,7 @@ import javafx.scene.text.FontWeight;
 public class VueKanban extends BorderPane implements Observateur {
 
     private Projet projet;
+    private ProjetService service;
 
     // Conteneurs graphiques
     private HBox boardContainer;
@@ -25,12 +27,13 @@ public class VueKanban extends BorderPane implements Observateur {
 
     private TacheAbstraite tacheSelectionnee = null;
     private HBox vueTacheSelectionnee = null;
-
     private Colonne colonneSelectionnee = null;
     private VBox vueColonneSelectionnee = null;
 
-    public VueKanban(Projet projet) {
+    public VueKanban(Projet projet, ProjetService service) {
         this.projet = projet;
+        this.service = service;
+
         this.projet.enregistrerObservateur(this);
         initialiserComposants();
         rafraichirVue();
@@ -43,9 +46,9 @@ public class VueKanban extends BorderPane implements Observateur {
         header.setAlignment(Pos.CENTER_LEFT);
         header.setPadding(new Insets(0, 0, 20, 0));
         Button backButton = new Button("<-");
-        Label titleLabel = new Label(projet.getNom());
-        titleLabel.setFont(Font.font("Arial", FontWeight.BOLD, 24));
-        header.getChildren().addAll(backButton, titleLabel);
+        Label titreLabel = new Label(projet.getNom());
+        titreLabel.setFont(Font.font("Arial", FontWeight.BOLD, 24));
+        header.getChildren().addAll(backButton, titreLabel);
         this.setTop(header);
 
         boardContainer = new HBox(15);
@@ -58,43 +61,56 @@ public class VueKanban extends BorderPane implements Observateur {
         sidebar.setPadding(new Insets(0, 0, 0, 15));
         sidebar.setPrefWidth(200);
 
-        VBox addTaskBox = new VBox(10);
-        addTaskBox.setBorder(new Border(new BorderStroke(Color.BLACK, BorderStrokeStyle.SOLID, CornerRadii.EMPTY, new BorderWidths(1))));
-        addTaskBox.setPadding(new Insets(10));
+        VBox addTacheBox = new VBox(10);
+        addTacheBox.setBorder(new Border(new BorderStroke(Color.BLACK, BorderStrokeStyle.SOLID, CornerRadii.EMPTY, new BorderWidths(1))));
+        addTacheBox.setPadding(new Insets(10));
+
+        VBox deleteBox = new VBox(10);
 
         Label lblAdd = new Label("Ajouter Tache");
-        tfTask = new TextField(); // Champ texte
+        tfTask = new TextField();
         tfTask.setPromptText("Nom de la tâche...");
         Button btnAdd = new Button("Ajouter");
         btnAdd.setMaxWidth(Double.MAX_VALUE);
 
-        ControleurAjouterTache ctrlAjout = new ControleurAjouterTache(this.projet, this, this.tfTask);
+        ControleurAjouterTache ctrlAjout = new ControleurAjouterTache(projet, service, this, tfTask);
         btnAdd.setOnAction(ctrlAjout);
 
-        addTaskBox.getChildren().addAll(lblAdd, tfTask, btnAdd);
+        addTacheBox.getChildren().addAll(lblAdd, tfTask, btnAdd);
 
         Button btnDelete = new Button("Supprimer Sélection");
         btnDelete.setMaxWidth(Double.MAX_VALUE);
         btnDelete.setStyle("-fx-background-color: #ffcccc; -fx-border-color: red;");
 
-        ControleurSupprimerTache ctrlSuppr = new ControleurSupprimerTache(this.projet, this);
-        btnDelete.setOnAction(ctrlSuppr);
+        Button btnDeleteCol = new Button("Supprimer Colonne");
+        btnDeleteCol.setMaxWidth(Double.MAX_VALUE);
+        btnDeleteCol.setStyle("-fx-background-color: #ffe6cc; -fx-border-color: orange;");
 
-        sidebar.getChildren().addAll(addTaskBox, btnDelete);
+        ControleurSupprimerTache ctrlSupprTache = new ControleurSupprimerTache(projet, service, this);
+        btnDelete.setOnAction(ctrlSupprTache);
+
+        ControleurSupprimerColonne ctrlSupprCol = new ControleurSupprimerColonne(projet, service, this);
+        btnDeleteCol.setOnAction(ctrlSupprCol);
+
+        sidebar.getChildren().addAll(addTacheBox, btnDelete, btnDeleteCol);
         this.setRight(sidebar);
     }
 
-    public TacheAbstraite getTacheSelectionnee() {
-        return this.tacheSelectionnee;
-    }
-
-    public Colonne getColonneSelectionnee() {
-        return this.colonneSelectionnee;
-    }
+    public TacheAbstraite getTacheSelectionnee() { return this.tacheSelectionnee; }
+    public Colonne getColonneSelectionnee() { return this.colonneSelectionnee; }
 
     public void resetSelection() {
         this.tacheSelectionnee = null;
+        if(this.vueTacheSelectionnee != null) {
+            this.vueTacheSelectionnee.setStyle("-fx-border-color: black; -fx-background-color: white;");
+        }
         this.vueTacheSelectionnee = null;
+
+        this.colonneSelectionnee = null;
+        if (this.vueColonneSelectionnee != null) {
+            this.vueColonneSelectionnee.setBorder(new Border(new BorderStroke(Color.BLACK, BorderStrokeStyle.SOLID, CornerRadii.EMPTY, new BorderWidths(1))));
+        }
+        this.vueColonneSelectionnee = null;
     }
 
     @Override
@@ -106,48 +122,75 @@ public class VueKanban extends BorderPane implements Observateur {
 
     private void rafraichirVue() {
         boardContainer.getChildren().clear();
-        this.colonneSelectionnee = null;
-        this.vueColonneSelectionnee = null;
 
-        for (Colonne c : projet.getColonnes()) {
-            VBox colView = createColumnView(c);
+        this.vueTacheSelectionnee = null;
+        this.vueColonneSelectionnee = null;
+        this.tacheSelectionnee = null;
+        this.colonneSelectionnee = null;
+
+        for (int i = 0; i < projet.getColonnes().size(); i++) {
+            Colonne c = projet.getColonnes().get(i);
+            VBox colView = creeColVue(c, i);
             boardContainer.getChildren().add(colView);
         }
+
+        Button btnAddCol = new Button("+ Ajouter Colonne");
+        btnAddCol.setPrefSize(200, 50);
+        btnAddCol.setStyle("-fx-border-color: gray; -fx-border-style: dashed; -fx-background-color: transparent; -fx-cursor: hand;");
+
+        ControleurAjouterColonne ctrlAddCol = new ControleurAjouterColonne(projet, service);
+        btnAddCol.setOnAction(ctrlAddCol);
+
+        boardContainer.getChildren().add(btnAddCol);
     }
 
-    private VBox createColumnView(Colonne c) {
-        VBox column = new VBox(10);
-        column.setPadding(new Insets(10));
-        column.setPrefWidth(200);
-        column.setMinWidth(200);
+    private VBox creeColVue(Colonne c, int indexColonne) {
+        VBox col = new VBox(10);
+        col.setPadding(new Insets(10));
+        col.setPrefWidth(200);
+        col.setMinWidth(200);
+        col.setBorder(new Border(new BorderStroke(Color.BLACK, BorderStrokeStyle.SOLID, CornerRadii.EMPTY, new BorderWidths(1))));
 
-        // Style par défaut
-        column.setBorder(new Border(new BorderStroke(Color.BLACK, BorderStrokeStyle.SOLID, CornerRadii.EMPTY, new BorderWidths(1))));
-
-        // NOUVEAU : Gestion du clic sur la COLONNE
-        column.setOnMouseClicked(e -> {
-            // Réinitialiser l'ancienne colonne sélectionnée (remettre en noir)
+        col.setOnMouseClicked(e -> {
             if (vueColonneSelectionnee != null) {
                 vueColonneSelectionnee.setBorder(new Border(new BorderStroke(Color.BLACK, BorderStrokeStyle.SOLID, CornerRadii.EMPTY, new BorderWidths(1))));
             }
-
-            // Sélectionner la nouvelle
             colonneSelectionnee = c;
-            vueColonneSelectionnee = column;
-
-            // Mettre en évidence (Bordure bleue plus épaisse par exemple)
-            column.setBorder(new Border(new BorderStroke(Color.BLUE, BorderStrokeStyle.SOLID, CornerRadii.EMPTY, new BorderWidths(2))));
+            vueColonneSelectionnee = col;
+            col.setBorder(new Border(new BorderStroke(Color.BLUE, BorderStrokeStyle.SOLID, CornerRadii.EMPTY, new BorderWidths(2))));
         });
 
-        column.getChildren().add(new Label(c.getNom()));
+        col.setOnDragOver(event -> {
+            if (event.getGestureSource() != col && event.getDragboard().hasString()) {
+                event.acceptTransferModes(TransferMode.MOVE);
+            }
+            event.consume();
+        });
+
+        col.setOnDragEntered(event -> {
+            if (event.getGestureSource() != col && event.getDragboard().hasString()) {
+                col.setStyle("-fx-background-color: #f0f0f0;");
+            }
+            event.consume();
+        });
+
+        col.setOnDragExited(event -> {
+            col.setStyle("-fx-background-color: transparent;");
+            event.consume();
+        });
+
+        ControleurDeplacerTache ctrlDrop = new ControleurDeplacerTache(projet, service, indexColonne);
+        col.setOnDragDropped(ctrlDrop);
+
+        col.getChildren().add(new Label(c.getNom()));
 
         for (TacheAbstraite t : c.getTaches()) {
-            column.getChildren().add(createTaskCard(t));
+            col.getChildren().add(createTaskCard(t, indexColonne));
         }
-        return column;
+        return col;
     }
 
-    private HBox createTaskCard(TacheAbstraite t) {
+    private HBox createTaskCard(TacheAbstraite t, int indexColonneSource) {
         HBox card = new HBox();
         card.setPadding(new Insets(15));
         card.setAlignment(Pos.CENTER_LEFT);
@@ -164,13 +207,21 @@ public class VueKanban extends BorderPane implements Observateur {
 
         card.setOnMouseClicked(e -> {
             e.consume();
-
             if (vueTacheSelectionnee != null) {
                 vueTacheSelectionnee.setStyle("-fx-border-color: black; -fx-background-color: white;");
             }
             tacheSelectionnee = t;
             vueTacheSelectionnee = card;
             card.setStyle("-fx-border-color: blue; -fx-border-width: 2; -fx-background-color: #e6f7ff;");
+        });
+
+        card.setOnDragDetected(e -> {
+            Dragboard db = card.startDragAndDrop(TransferMode.MOVE);
+            ClipboardContent content = new ClipboardContent();
+            content.putString(indexColonneSource + ":" + t.getId());
+            content.putImage(card.snapshot(new SnapshotParameters(), null));
+            db.setContent(content);
+            e.consume();
         });
 
         return card;
