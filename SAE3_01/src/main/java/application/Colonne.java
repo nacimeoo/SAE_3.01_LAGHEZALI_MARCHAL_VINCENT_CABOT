@@ -10,6 +10,7 @@ public class Colonne {
     private String nom;
     private List<TacheAbstraite> taches = new ArrayList<>();
 
+
     public Colonne(String nom) {
         this.nom = nom;
     }
@@ -51,6 +52,7 @@ public class Colonne {
                 dependances.addAll(((TacheMere) t).dependance);
             }
         }
+        String s = "--- Colonne : " + nom + " ---";
 
         StringBuilder sb = new StringBuilder("--- Colonne : " + nom + " ---\n");
 
@@ -62,4 +64,5 @@ public class Colonne {
 
         return sb.toString();
     }
+
 }

@@ -12,12 +12,12 @@ public class ColonneDAOImpl implements IColonneDAO {
     @Override
     public Colonne getColonneById(int id) throws Exception {
         try (Connection connection = DBConnection.getConnection()) {;
-            String query = "SELECT * FROM colonnes WHERE id = ?";
+            String query = "SELECT * FROM colonne WHERE id = ?";
             try (PreparedStatement statement = connection.prepareStatement(query)) {
                 statement.setInt(1, id);
                 try (ResultSet resultSet = statement.executeQuery()) {
                     if (resultSet.next()) {
-                        Colonne colonne = new Colonne(resultSet.getString("nom"));;
+                        Colonne colonne = new Colonne(resultSet.getString("titre"));;
                         colonne.setId(resultSet.getInt("id"));
                         return colonne;
                     } else {
@@ -35,12 +35,12 @@ public class ColonneDAOImpl implements IColonneDAO {
     @Override
     public List<Colonne> getAllColonnes() throws Exception {
         try (Connection connection = DBConnection.getConnection()) {;
-            String query = "SELECT * FROM colonnes";
+            String query = "SELECT * FROM colonne";
             List<Colonne> colonnes = new ArrayList<>();
             try (Statement statement = connection.createStatement()) {
                 try (ResultSet resultSet = statement.executeQuery(query)) {
                     while (resultSet.next()) {
-                        Colonne colonne = new Colonne(resultSet.getString("nom"));
+                        Colonne colonne = new Colonne(resultSet.getString("titre"));
                         colonne.setId(resultSet.getInt("id"));
                         colonnes.add(colonne);
                     }
@@ -56,24 +56,33 @@ public class ColonneDAOImpl implements IColonneDAO {
 
     @Override
     public void save(Colonne colonne) throws Exception {
-        try (Connection connection = DBConnection.getConnection()) {;
-            String query = "INSERT INTO colonnes (nom) VALUES (?)";
-            try (PreparedStatement statement = connection.prepareStatement(query)) {
-                statement.setString(1, colonne.getNom());
-                statement.executeUpdate();
-            } catch (Exception e) {
-                throw new Exception("Erreur lors de l'insertion de la colonne", e);
+        String query = "INSERT INTO colonne (titre) VALUES (?)";
+
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
+
+            statement.setString(1, colonne.getNom());
+            int affectedRows = statement.executeUpdate();
+
+            if (affectedRows > 0) {
+                try (ResultSet generatedKeys = statement.getGeneratedKeys()) {
+                    if (generatedKeys.next()) {
+                        int idGenere = generatedKeys.getInt(1);
+                        colonne.setId(idGenere);
+                    }
+                } catch (Exception e) {
+                    throw new Exception("Erreur lors de la récupération de l'ID généré pour la colonne", e);
+                }
             }
         } catch (Exception e) {
             throw new Exception("Erreur lors de la connexion à la base de données", e);
         }
-
     }
 
     @Override
     public void delete(int id) throws Exception {
         try (Connection connection = DBConnection.getConnection()) {;
-            String sql = "DELETE FROM colonnes WHERE id = ?";
+            String sql = "DELETE FROM colonne WHERE id = ?";
             String sql2 = "DELETE FROM projet2colonne WHERE id_colonne = ?";
             String sql3 = "SELECT id_tache FROM colonne2tache WHERE id_colonne = ?";
 

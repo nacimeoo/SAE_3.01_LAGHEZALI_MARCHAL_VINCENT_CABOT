@@ -14,17 +14,22 @@ public class TacheDAOImpl implements ITacheDAO {
 
     @Override
     public TacheAbstraite getTacheById(int id) throws Exception {
-        String sql = "SELECT * FROM Taches WHERE id = ?";
+        String sql = "SELECT * FROM Tache WHERE id = ?";
         try (Connection con = DBConnection.getConnection();) {
             PreparedStatement stmt = con.prepareStatement(sql);
             stmt.setInt(1, id);
             ResultSet rs = stmt.executeQuery();
             if (rs.next()) {
                 if (rs.getInt("type") == 0) {
-                    TacheMere t = new TacheMere(rs.getInt("id"), rs.getString("nom"));
+                    TacheMere t = new TacheMere(rs.getString("titre"));
+                    t.setId(rs.getInt("id"));
+                    return t;
                 } else {
-                    SousTache t = new SousTache(rs.getInt("id"), rs.getString("nom"));
+                    SousTache t = new SousTache(rs.getString("titre"));
+                    t.setId(rs.getInt("id"));
+                    return t;
                 }
+
             }
         } catch (Exception e) {
             throw new Exception("Erreur lors de la récupération de la tâche avec l'ID: " + id, e);
@@ -34,17 +39,19 @@ public class TacheDAOImpl implements ITacheDAO {
 
     @Override
     public List<TacheAbstraite> getAllTaches() throws Exception {
-        String sql = "SELECT * FROM Taches";
+        String sql = "SELECT * FROM Tache";
         List<TacheAbstraite> taches = new ArrayList<TacheAbstraite>();
         try (Connection con = DBConnection.getConnection();) {
             Statement stmt = con.createStatement();
             ResultSet rs = stmt.executeQuery(sql);
             while (rs.next()) {
                 if (rs.getInt("type") == 0) {
-                    TacheMere t = new TacheMere(rs.getInt("id"), rs.getString("nom"));
+                    TacheMere t = new TacheMere(rs.getString("titre"));
+                    t.setId(rs.getInt("id"));
                     taches.add(t);
                 } else {
-                    SousTache t = new SousTache(rs.getInt("id"), rs.getString("nom"));
+                    SousTache t = new SousTache(rs.getString("titre"));
+                    t.setId(rs.getInt("id"));
                     taches.add(t);
                 }
             }
@@ -56,8 +63,8 @@ public class TacheDAOImpl implements ITacheDAO {
 
     @Override
     public List<TacheAbstraite> getTachesByColonneId(int colonneId) throws Exception {
-        String sql = "SELECT * FROM Taches" +
-                "inner join colonne2tache on colonne2tache.id_tache = taches.id "
+        String sql = "SELECT * FROM Tache" +
+                "inner join colonne2tache on colonne2tache.id_tache = tache.id "
                 + "WHERE colonne2tache.id_colonne = " + colonneId;
         List<TacheAbstraite> taches = new ArrayList<TacheAbstraite>();
         try (Connection con = DBConnection.getConnection();) {
@@ -65,10 +72,12 @@ public class TacheDAOImpl implements ITacheDAO {
             ResultSet rs = stmt.executeQuery(sql);
             while (rs.next()) {
                 if (rs.getInt("type") == 0) {
-                    TacheMere t = new TacheMere(rs.getInt("id"), rs.getString("nom"));
+                    TacheMere t = new TacheMere(rs.getString("titre"));
+                    t.setId(rs.getInt("id"));
                     taches.add(t);
                 } else {
-                    SousTache t = new SousTache(rs.getInt("id"), rs.getString("nom"));
+                    SousTache t = new SousTache(rs.getString("titre"));
+                    t.setId(rs.getInt("id"));
                     taches.add(t);
                 }
             }
@@ -83,7 +92,7 @@ public class TacheDAOImpl implements ITacheDAO {
 
             boolean exist = false;
 
-            String sqlSelect = "SELECT COUNT(*) FROM Taches WHERE id = ?";
+            String sqlSelect = "SELECT COUNT(*) FROM Tache WHERE id = ?";
             try (PreparedStatement psSelect = con.prepareStatement(sqlSelect)) {
                 psSelect.setInt(1, tache.getId());
 
@@ -95,7 +104,7 @@ public class TacheDAOImpl implements ITacheDAO {
             }
 
             if (exist) {
-                String sqlUpdate = "UPDATE Taches SET nom = ? WHERE id = ?";
+                String sqlUpdate = "UPDATE Tache SET titre = ? WHERE id = ?";
                 try (PreparedStatement psUpdate = con.prepareStatement(sqlUpdate)) {
                     psUpdate.setString(1, tache.getNom());
                     psUpdate.setInt(2, tache.getId());
@@ -103,14 +112,26 @@ public class TacheDAOImpl implements ITacheDAO {
                 } catch (Exception e) {
                     throw new Exception("Erreur lors de la mise à jour de la tâche avec l'ID: " + tache.getId(), e);
                 }
-            } else {String sqlInsert = "INSERT INTO Taches (nom, type) VALUES (?, ?)";
-                try (PreparedStatement psInsert = con.prepareStatement(sqlInsert)) {
+            } else {
+                String sqlInsert = "INSERT INTO Tache (titre, type) VALUES (?, ?)";
+
+                try (PreparedStatement psInsert = con.prepareStatement(sqlInsert, Statement.RETURN_GENERATED_KEYS)) {
                     int type = (tache instanceof TacheMere) ? 0 : 1;
 
                     psInsert.setString(1, tache.getNom());
                     psInsert.setInt(2, type);
 
-                    psInsert.executeUpdate();
+                    int affectedRows = psInsert.executeUpdate();
+
+                    if (affectedRows > 0) {
+                        try (ResultSet generatedKeys = psInsert.getGeneratedKeys()) {
+                            if (generatedKeys.next()) {
+                                tache.setId(generatedKeys.getInt(1));
+                            }
+                        } catch (Exception e) {
+                            throw new Exception("Erreur lors de la récupération de l'ID généré pour la nouvelle tâche", e);
+                        }
+                    }
                 } catch (Exception e) {
                     throw new Exception("Erreur lors de l'insertion de la nouvelle tâche", e);
                 }
@@ -123,7 +144,7 @@ public class TacheDAOImpl implements ITacheDAO {
 
     @Override
     public void delete(int id) throws Exception {
-        String sql = "DELETE FROM Taches WHERE id = " + id;
+        String sql = "DELETE FROM Tache WHERE id = " + id;
         String sql2 = "DELETE FROM colonne2tache WHERE id_tache = " + id;
         String sql3 = "DELETE FROM tache2etiquette WHERE id_tache = " + id;
         try (Connection con = DBConnection.getConnection();) {

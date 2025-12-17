@@ -32,7 +32,8 @@ public class ControleurTexte {
         switch (action) {
             case 1:
                 String nom = vue.lireChaine("Nom du projet");
-                this.projet = new Projet(1, nom, new Date());
+                this.projet = new Projet(nom, new Date());
+                projet.setId(1);
                 this.projet.enregistrerObservateur(this.vue);
                 vue.afficherMessage("Projet créé avec succès.");
                 break;
@@ -50,13 +51,18 @@ public class ControleurTexte {
                     int type = vue.lireEntier();
                     String nomT = vue.lireChaine("Nom de la tâche");
 
+                    int duree = vue.lireEntier("Durée estimée (en jour)");
+
                     vue.afficherMessage("Sélectionnez une colonne :");
                     vue.afficherColonnes(projet);
                     int c = vue.lireEntier("Index colonne");
 
                     TacheAbstraite t = (type == 1)
-                            ? new TacheMere((int)(Math.random()*1000), nomT)
-                            : new SousTache((int)(Math.random()*1000), nomT);
+                            ? new TacheMere(nomT)
+
+                            : new SousTache(nomT);
+
+                    t.setDureeEstimee(duree);
 
                     projetService.ajouterTache(projet.trouverColonneParId(c),t);
                 }
@@ -116,6 +122,9 @@ public class ControleurTexte {
             vue.afficherMessage("2 - Déplacer");
             vue.afficherMessage("3 - Supprimer");
             vue.afficherMessage("4 - Changer état");
+            vue.afficherMessage("5 - Ajouter une étiquette");
+            vue.afficherMessage("6 - Ajouter une description");
+            vue.afficherMessage("7 - Voir la vue détaillée");
             vue.afficherMessage("0 - Retour");
 
             int choix = vue.lireEntier();
@@ -140,6 +149,25 @@ public class ControleurTexte {
                     break;
                 case 4:
                     changerEtat(laTache);
+                    break;
+                case 5:
+                    String libelle = vue.lireChaine("Libellé de l'étiquette");
+                    TacheAbstraite tacheAvecEtiquette = new Etiquette(laTache, libelle);
+                    projet.getColonnes().get(colSel).getTaches().set(tSel, tacheAvecEtiquette);
+                    laTache = tacheAvecEtiquette;
+                    projet.notifierObservateurs();
+                    vue.afficherMessage("Étiquette ajoutée avec succès.");
+                    break;
+                case 6:
+                    String desc = vue.lireChaine("Description");
+                    TacheAbstraite tacheAvecDesc = new Description(laTache, desc);
+                    projet.getColonnes().get(colSel).getTaches().set(tSel, tacheAvecDesc);
+                    laTache = tacheAvecDesc;
+                    projet.notifierObservateurs();
+                    vue.afficherMessage("Description ajoutée (visible uniquement dans les détails).");
+                    break;
+                case 7:
+                    vue.afficherMessage(laTache.afficherDetails());
                     break;
                 case 0:
                     sousMenu = false;

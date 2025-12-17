@@ -10,13 +10,17 @@ import java.util.List;
 public class ProjetDAOImpl implements IProjetDAO {
     @Override
     public Projet getProjetById(int id) throws Exception {
-        String sql = "SELECT * FROM projets WHERE id = ?";
-        try (Connection conn = DBConnection.getConnection()) {
-            PreparedStatement stmt = conn.prepareStatement(sql);
+        String sql = "SELECT * FROM projet WHERE id = ?";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
             stmt.setInt(1, id);
+
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
-                    return new Projet(rs.getInt("id"), rs.getString("nom"), rs.getDate("date"));
+                    Projet projet = new Projet(rs.getString("nom"), rs.getDate("dateCreation"));
+                    projet.setId(rs.getInt("id"));
+                    return projet;
                 } else {
                     return null;
                 }
@@ -24,19 +28,20 @@ public class ProjetDAOImpl implements IProjetDAO {
                 throw new Exception("Erreur lors de l'exécution de la requête pour le projet avec l'ID: " + id, e);
             }
         } catch (Exception e) {
-            throw new Exception("Erreur lors de la connexion");
+            throw new Exception("Erreur lors de la connexion à la base de données", e);
         }
     }
 
     @Override
     public List<Projet> getAllProjets() throws Exception {
-        String sql = "SELECT * FROM projets";
+        String sql = "SELECT * FROM projet";
         List<Projet> projets = new ArrayList<>();
         try (Connection conn = DBConnection.getConnection()) {
             Statement stmt = conn.createStatement();
             try (ResultSet rs = stmt.executeQuery(sql)) {
                 while (rs.next()) {
-                    Projet projet = new Projet(rs.getInt("id"), rs.getString("nom"), rs.getDate("date"));
+                    Projet projet = new Projet(rs.getString("nom"), rs.getDate("dateCreation"));
+                    projet.setId(rs.getInt("id"));
                     projets.add(projet);
                 }
                 return projets;
@@ -49,28 +54,37 @@ public class ProjetDAOImpl implements IProjetDAO {
     }
 
     @Override
+
+
     public void save(Projet projet) throws Exception {
-        try (Connection conn = DBConnection.getConnection()) {
-            String sql = "INSERT INTO projets (nom, date) VALUES (?, ?)";
-            try (PreparedStatement stmt = conn.prepareStatement(sql)) {
-                stmt.setString(1, projet.getNom());
-                stmt.setDate(2, new java.sql.Date(projet.getDateCreation().getTime()));
-                stmt.executeUpdate();
-            } catch (Exception e) {
-                throw new Exception("Erreur lors de l'exécution de la requête de sauvegarde du projet", e);
+        String sql = "INSERT INTO projet (nom, dateCreation) VALUES (?, ?)";
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+
+            stmt.setString(1, projet.getNom());
+            stmt.setDate(2, new java.sql.Date(projet.getDateCreation().getTime()));
+
+            int affectedRows = stmt.executeUpdate();
+
+            if (affectedRows > 0) {
+                try (ResultSet generatedKeys = stmt.getGeneratedKeys()) {
+                    if (generatedKeys.next()) {
+                        int idGenere = generatedKeys.getInt(1);
+                        projet.setId(idGenere);
+                    }
+                }
             }
-
         } catch (Exception e) {
-            throw new Exception("Erreur lors de la connexion", e);
+            throw new Exception("Erreur lors de la sauvegarde du projet ou de la connexion à la base de données.", e);
         }
-
     }
 
     @Override
     public void delete(int id) throws Exception {
         try (Connection conn = DBConnection.getConnection()) {
-            String sql = "DELETE FROM projets WHERE id = ?";
-            String sql2 = "SELECT id_colonne FROM colonne2projet WHERE id_projet = ?";
+            String sql = "DELETE FROM projet WHERE id = ?";
+            String sql2 = "SELECT id_colonne FROM projet2colonne WHERE id_projet = ?";
 
             try (PreparedStatement stmt = conn.prepareStatement(sql)) {
                 stmt.setInt(1, id);
@@ -103,7 +117,7 @@ public class ProjetDAOImpl implements IProjetDAO {
     @Override
     public List<Colonne> getColonnesByProjetId(int projetId) throws Exception {
         try (Connection conn = DBConnection.getConnection()) {
-            String sql = "SELECT c.id, c.nom FROM colonnes c " +
+            String sql = "SELECT c.id, c.nom FROM colonne c " +
                     "INNER JOIN colonne2projet cp ON c.id = cp.id_colonne " +
                     "WHERE cp.id_projet = ?";
             List<Colonne> colonnes = new ArrayList<>();

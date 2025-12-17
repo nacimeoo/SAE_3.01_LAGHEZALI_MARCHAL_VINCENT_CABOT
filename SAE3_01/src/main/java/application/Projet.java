@@ -12,12 +12,10 @@ public class Projet implements Sujet {
     private List<Colonne> colonnes = new ArrayList<>();
     private List<Observateur> observateurs = new ArrayList<>();
 
-    public Projet(int id, String nom, Date dateCreation) {
-        this.id = id;
+    public Projet(String nom, Date dateCreation) {
         this.nom = nom;
         this.dateCreation = dateCreation;
     }
-
     @Override
     public void enregistrerObservateur(Observateur o) {
         if (o != null) observateurs.add(o);
@@ -38,6 +36,10 @@ public class Projet implements Sujet {
             if (c.getId() == idColonne) return c;
         }
         return null;
+    }
+
+    public void setId(int id) {
+        this.id = id;
     }
 
     public List<Colonne> getColonnes() {
@@ -70,5 +72,13 @@ public class Projet implements Sujet {
 
     public String getNom() { return nom; }
 
+
     public Date getDateCreation() { return dateCreation; }
+
+
+    public void setNom(String nom) {
+        this.nom = nom;
+    }
 }
+
+

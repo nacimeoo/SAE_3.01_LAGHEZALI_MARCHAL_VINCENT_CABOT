@@ -12,8 +12,10 @@ class TacheTest {
      */
     @Test
     void testSousTache() {
-        SousTache st = new SousTache(10, "dev");
-        TacheAbstraite autre = new SousTache(11, "");
+        SousTache st = new SousTache("dev");
+        st.setId(10);
+        TacheAbstraite autre = new SousTache( "");
+        st.setId(11);
 
         assertFalse(st.ajouterDependance(autre), "Une sous-tâche ne doit pas accepter de dépendance");
         assertFalse(st.supprimerDependance(autre));
@@ -25,8 +27,10 @@ class TacheTest {
      */
     @Test
     void testTacheMereAjoutDependanceOK() {
-        TacheMere mere = new TacheMere(20, "Grosse Tâche");
-        SousTache fille = new SousTache(21, "Partie 1");
+        TacheMere mere = new TacheMere("Grosse Tâche");
+        mere.setId(20);
+        SousTache fille = new SousTache("Partie 1");
+        fille.setId(21);
 
         assertTrue(mere.ajouterDependance(fille));
 
@@ -40,13 +44,25 @@ class TacheTest {
      */
     @Test
     void testTacheMereSuppressionDependanceOK() {
-        TacheMere mere = new TacheMere(20, "Grosse Tâche");
-        SousTache fille = new SousTache(21, "Partie 1");
+        TacheMere mere = new TacheMere("Grosse Tâche");
+        mere.setId(20);
+        SousTache fille = new SousTache("Partie 1");
+        fille.setId(21);
 
         mere.ajouterDependance(fille);
         assertTrue(mere.supprimerDependance(fille));
 
         String affichage = mere.afficher("");
         assertFalse(affichage.contains("Partie 1"));
+    }
+
+    /**
+     * Teste le changement d'état
+     */
+    @Test
+    void testChangerEtat() {
+        SousTache st = new SousTache(1, "Petite tâche");
+        st.setEtat("En cours");
+        assertEquals("En cours", st.getEtat());
     }
 }

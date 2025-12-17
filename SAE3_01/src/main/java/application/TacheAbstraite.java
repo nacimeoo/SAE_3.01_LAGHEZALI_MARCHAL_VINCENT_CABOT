@@ -17,8 +17,7 @@ public abstract class TacheAbstraite{
     private TacheDAOImpl tacheDAO = new TacheDAOImpl();
 
 
-    public TacheAbstraite(int id, String nom) {
-        this.id = id;
+    public TacheAbstraite(String nom) {
         this.nom = nom;
         this.etat = "A faire";
     }
@@ -98,6 +97,19 @@ public abstract class TacheAbstraite{
     }
 
     public abstract String afficher(String indient);
+
+    public String afficherDetails() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("=======================================\n");
+        sb.append("DÉTAILS DE LA TÂCHE\n");
+        sb.append("=======================================\n");
+        sb.append("ID : ").append(this.getId()).append("\n");
+        sb.append("Titre : ").append(this.getNom()).append("\n");
+        sb.append("État : ").append(this.getEtat()).append("\n");
+        sb.append("duree Estimee : ").append(this.getDureeEstimee()).append(" jours").append("\n");
+
+        return sb.toString();
+    }
 
 
 }
