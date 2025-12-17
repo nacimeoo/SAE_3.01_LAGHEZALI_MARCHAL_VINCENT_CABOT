@@ -159,4 +159,19 @@ public class TacheDAOImpl implements ITacheDAO {
             throw new Exception("Erreur lors de la suppression de la tâche avec l'ID: " + id, e);
         }
     }
+
+    public void update_detail(TacheAbstraite tache) throws Exception {
+        String sql = "UPDATE Tache SET titre = ?, descrption = ?, priorite = ?, etat = ? WHERE id = ?";
+        try (Connection con = DBConnection.getConnection();) {
+            PreparedStatement stmt = con.prepareStatement(sql);
+            stmt.setString(1, tache.getNom());
+            stmt.setString(2, tache.getDescription());
+            stmt.setInt(3, tache.getPriorite());
+            stmt.setString(4, tache.getEtat());
+            stmt.setInt(5, tache.getId());
+            stmt.executeUpdate();
+        } catch (Exception e) {
+            throw new Exception("Erreur lors de la mise à jour de la tâche avec l'ID: " + tache.getId(), e);
+        }
+    }
 }

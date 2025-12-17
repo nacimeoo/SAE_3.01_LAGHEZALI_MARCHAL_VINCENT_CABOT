@@ -150,7 +150,7 @@ public class ControleurTexte {
                     break;
                 case 5:
                     String libelle = vue.lireChaine("Libellé de l'étiquette");
-                    TacheAbstraite tacheAvecEtiquette = new Etiquette(laTache, libelle);
+                    TacheAbstraite tacheAvecEtiquette = new Etiquette(laTache, libelle, null);
                     projet.getColonnes().get(colSel).getTaches().set(tSel, tacheAvecEtiquette);
                     laTache = tacheAvecEtiquette;
                     projet.notifierObservateurs();
