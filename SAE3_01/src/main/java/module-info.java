@@ -14,5 +14,7 @@ module application {
     exports application;
     exports application.vue;
     opens application.vue to javafx.fxml;
+    exports application.controller;
+    opens application.controller to javafx.fxml;
     exports application.DAO;
 }
