@@ -2,6 +2,7 @@ package application.vue;
 
 import application.controller.ControleurAjouterTache;
 import application.controller.ControleurSupprimerTache;
+import application.controller.ControleurDeplacerTache; // Nouveau !
 import application.*;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -24,6 +25,9 @@ public class VueKanban extends BorderPane implements Observateur {
 
     private TacheAbstraite tacheSelectionnee = null;
     private HBox vueTacheSelectionnee = null;
+
+    private Colonne colonneSelectionnee = null;
+    private VBox vueColonneSelectionnee = null;
 
     public VueKanban(Projet projet) {
         this.projet = projet;
@@ -64,7 +68,7 @@ public class VueKanban extends BorderPane implements Observateur {
         Button btnAdd = new Button("Ajouter");
         btnAdd.setMaxWidth(Double.MAX_VALUE);
 
-        ControleurAjouterTache ctrlAjout = new ControleurAjouterTache(this.projet, this.tfTask);
+        ControleurAjouterTache ctrlAjout = new ControleurAjouterTache(this.projet, this, this.tfTask);
         btnAdd.setOnAction(ctrlAjout);
 
         addTaskBox.getChildren().addAll(lblAdd, tfTask, btnAdd);
@@ -84,6 +88,10 @@ public class VueKanban extends BorderPane implements Observateur {
         return this.tacheSelectionnee;
     }
 
+    public Colonne getColonneSelectionnee() {
+        return this.colonneSelectionnee;
+    }
+
     public void resetSelection() {
         this.tacheSelectionnee = null;
         this.vueTacheSelectionnee = null;
@@ -98,6 +106,9 @@ public class VueKanban extends BorderPane implements Observateur {
 
     private void rafraichirVue() {
         boardContainer.getChildren().clear();
+        this.colonneSelectionnee = null;
+        this.vueColonneSelectionnee = null;
+
         for (Colonne c : projet.getColonnes()) {
             VBox colView = createColumnView(c);
             boardContainer.getChildren().add(colView);
@@ -109,7 +120,25 @@ public class VueKanban extends BorderPane implements Observateur {
         column.setPadding(new Insets(10));
         column.setPrefWidth(200);
         column.setMinWidth(200);
+
+        // Style par défaut
         column.setBorder(new Border(new BorderStroke(Color.BLACK, BorderStrokeStyle.SOLID, CornerRadii.EMPTY, new BorderWidths(1))));
+
+        // NOUVEAU : Gestion du clic sur la COLONNE
+        column.setOnMouseClicked(e -> {
+            // Réinitialiser l'ancienne colonne sélectionnée (remettre en noir)
+            if (vueColonneSelectionnee != null) {
+                vueColonneSelectionnee.setBorder(new Border(new BorderStroke(Color.BLACK, BorderStrokeStyle.SOLID, CornerRadii.EMPTY, new BorderWidths(1))));
+            }
+
+            // Sélectionner la nouvelle
+            colonneSelectionnee = c;
+            vueColonneSelectionnee = column;
+
+            // Mettre en évidence (Bordure bleue plus épaisse par exemple)
+            column.setBorder(new Border(new BorderStroke(Color.BLUE, BorderStrokeStyle.SOLID, CornerRadii.EMPTY, new BorderWidths(2))));
+        });
+
         column.getChildren().add(new Label(c.getNom()));
 
         for (TacheAbstraite t : c.getTaches()) {
@@ -134,6 +163,8 @@ public class VueKanban extends BorderPane implements Observateur {
         card.getChildren().add(lblName);
 
         card.setOnMouseClicked(e -> {
+            e.consume();
+
             if (vueTacheSelectionnee != null) {
                 vueTacheSelectionnee.setStyle("-fx-border-color: black; -fx-background-color: white;");
             }
