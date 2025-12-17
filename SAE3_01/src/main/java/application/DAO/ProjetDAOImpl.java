@@ -3,10 +3,7 @@ package application.DAO;
 import application.Colonne;
 import application.Projet;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.Statement;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -138,6 +135,19 @@ public class ProjetDAOImpl implements IProjetDAO {
             }
         } catch (Exception e) {
             throw new Exception("Erreur lors de la connexion", e);
+        }
+    }
+
+    public void addColonne(Colonne colonne, int idProj) throws SQLException, ClassNotFoundException {
+        try(Connection conn = DBConnection.getConnection()){
+            String sql = "INSERT INTO projet2colonne (id_projet, id_colonne) VALUES (?, ?)";
+            try ( PreparedStatement stmt = conn.prepareStatement(sql)){
+                stmt.setInt(1, idProj);
+                stmt.setInt(2, colonne.getId());
+                stmt.executeUpdate();
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            }
         }
     }
 }

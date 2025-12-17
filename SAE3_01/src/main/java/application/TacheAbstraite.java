@@ -1,5 +1,7 @@
 package application;
 
+import application.DAO.TacheDAOImpl;
+
 import java.util.ArrayList;
 import java.util.Date;
 
@@ -12,6 +14,7 @@ public abstract class TacheAbstraite{
     protected Date dateFin;
     protected int dureeEstimee;
     protected String etat;
+    private TacheDAOImpl tacheDAO = new TacheDAOImpl();
 
 
     public TacheAbstraite(String nom) {
@@ -88,6 +91,10 @@ public abstract class TacheAbstraite{
     public abstract boolean ajouterDependance(TacheAbstraite t);
 
     public abstract boolean supprimerDependance(TacheAbstraite t);
+
+    public TacheDAOImpl getTacheDAO() {
+        return tacheDAO;
+    }
 
     public abstract String afficher(String indient);
 

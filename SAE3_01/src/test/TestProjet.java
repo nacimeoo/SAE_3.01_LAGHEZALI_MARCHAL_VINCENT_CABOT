@@ -10,6 +10,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class TestProjet {
 
     private Projet projet;
+    private ProjetService projetService;
     private Colonne colSource;
     private Colonne colDestination;
     private SousTache  tache;
@@ -21,10 +22,11 @@ class TestProjet {
     @BeforeEach
     void setUp() {
         projet = new Projet("Mon Projet", new Date());
+        projetService = new ProjetService();
         projet.setId(1);
         colSource = new Colonne("A faire");
         colDestination = new Colonne("En cours");
-        tache = new SousTache(10, "Dev");
+        tache = new SousTache("Dev");
 
         observerNotifier = false;
         projet.enregistrerObservateur(s -> observerNotifier = true);
@@ -44,8 +46,8 @@ class TestProjet {
      * Teste l'ajout de colonnes
      */
     @Test
-    void testAjouterColonneOK() {
-        projet.ajouterColonne(colSource);
+    void testAjouterColonneOK() throws Exception {
+        projetService.ajouterColonne(projet,colSource);
         assertEquals(1, projet.getColonnes().size());
         assertEquals("A faire", projet.getColonnes().get(0).getNom());
     }
@@ -54,11 +56,11 @@ class TestProjet {
      * Teste la suppression d'une colonne
      */
     @Test
-    void testSupprimerColonneOK() {
-        projet.ajouterColonne(colSource);
-        projet.ajouterColonne(colDestination);
+    void testSupprimerColonneOK() throws Exception {
+        projetService.ajouterColonne(projet,colSource);
+        projetService.ajouterColonne(projet, colDestination);
 
-        projet.supprimerColonne(0);
+        projetService.supprimerColonne(projet, projet.trouverColonneParId(0));
 
         assertEquals(1, projet.getColonnes().size());
         assertEquals("En cours", projet.getColonnes().get(0).getNom());
@@ -68,23 +70,23 @@ class TestProjet {
      * Vérifie le déplacement d'une tâche
      */
     @Test
-    void testDeplacerTacheOK() {
-        projet.ajouterColonne(colSource);
-        projet.ajouterColonne(colDestination);
+    void testDeplacerTacheOK() throws Exception {
+        projetService.ajouterColonne(projet,colSource);
+        projetService.ajouterColonne(projet, colDestination);
         colSource.ajouterTache(tache);
 
-        projet.deplacerTache(0, 1, tache);
+        projetService.deplacerTache(projet.trouverColonneParId(0), projet.trouverColonneParId(1), tache);
 
         assertFalse(colSource.getTaches().contains(tache), "La tâche doit être retirée de la source");
         assertTrue(colDestination.getTaches().contains(tache), "La tâche doit être présente dans la destination");
     }
 
     @Test
-    void testAjouterTacheDansColonne() {
-        projet.ajouterColonne(colSource);
+    void testAjouterTacheDansColonne() throws Exception {
+        projetService.ajouterColonne(projet, colSource);
         observerNotifier = false;
 
-        projet.ajouterTacheDansColonne(tache, 0);
+        projetService.ajouterTache(projet.trouverColonneParId(0),tache);
 
         assertTrue(colSource.getTaches().contains(tache));
         assertTrue(observerNotifier);
@@ -94,13 +96,13 @@ class TestProjet {
      * Teste la suppression d'une tâche via le projet et la notification.
      */
     @Test
-    void testSupprimerTacheDeColonne() {
-        projet.ajouterColonne(colSource);
-        projet.ajouterTacheDansColonne(tache, 0);
+    void testSupprimerTacheDeColonne() throws Exception {
+        projetService.ajouterColonne(projet, colSource);
+        projetService.ajouterTache(projet.trouverColonneParId(0),tache);
 
         observerNotifier = false;
 
-        projet.supprimerTacheDeColonne(tache, 0);
+        projetService.supprimerTache(projet.trouverColonneParId(0),tache);
 
         assertTrue(colSource.getTaches().isEmpty());
         assertTrue(observerNotifier);
@@ -110,13 +112,13 @@ class TestProjet {
      * Vérifie le changement d'état et la notification MVC
      */
     @Test
-    void testChangerEtatTache() {
-        projet.ajouterColonne(colSource);
-        projet.ajouterTacheDansColonne(tache, 0);
+    void testChangerEtatTache() throws Exception {
+        projetService.ajouterColonne(projet, colSource);
+        projetService.ajouterTache(projet.trouverColonneParId(0), tache);
 
         observerNotifier = false;
 
-        projet.changerEtatTache(tache, "Terminer");
+        projetService.changerEtat(projet,tache,"Terminer");
 
         assertEquals("Terminer", tache.getEtat());
         assertTrue(observerNotifier);
@@ -126,16 +128,16 @@ class TestProjet {
      * Teste l'ajout de dépendance entre une tâche mère et une sous-tâche.
      */
     @Test
-    void testAjouterDependanceTache() {
-        TacheMere mere = new TacheMere(100, "Big Task");
-        SousTache fille = new SousTache(101, "Small Task");
+    void testAjouterDependanceTache() throws Exception {
+        TacheMere mere = new TacheMere( "Big Task");
+        SousTache fille = new SousTache( "Small Task");
 
-        projet.ajouterColonne(colSource);
-        projet.ajouterTacheDansColonne(mere, 0);
-        projet.ajouterTacheDansColonne(fille, 0);
+        projetService.ajouterColonne(projet, colSource);
+        projetService.ajouterTache(projet.trouverColonneParId(0),mere);
+        projetService.ajouterTache(projet.trouverColonneParId(0), fille);
 
 
-        boolean succes = projet.ajouterDependanceTache(mere, fille);
+        boolean succes = projetService.ajouterDependance(projet, mere, fille);
 
         assertTrue(succes);
     }
@@ -144,8 +146,8 @@ class TestProjet {
      * Vérifie qu'on ne peut pas ajouter une colonne nulle.
      */
     @Test
-    void testAjouterColonneNull() {
-        projet.ajouterColonne(null);
+    void testAjouterColonneNull() throws Exception {
+        projetService.ajouterColonne(projet, null);
 
         assertTrue(projet.getColonnes().isEmpty());
     }

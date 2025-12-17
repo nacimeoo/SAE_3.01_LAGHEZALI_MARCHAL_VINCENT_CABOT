@@ -1,11 +1,9 @@
 package application.DAO;
 
 import application.Colonne;
+import application.TacheAbstraite;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.Statement;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -88,20 +86,6 @@ public class ColonneDAOImpl implements IColonneDAO {
             String sql2 = "DELETE FROM projet2colonne WHERE id_colonne = ?";
             String sql3 = "SELECT id_tache FROM colonne2tache WHERE id_colonne = ?";
 
-            try (PreparedStatement stmt = connection.prepareStatement(sql)) {
-                stmt.setInt(1, id);
-                stmt.executeUpdate();
-            } catch (Exception e) {
-                throw new Exception("Erreur lors de la suppression de la colonne pour l'ID: " + id, e);
-            }
-
-            try (PreparedStatement stmt = connection.prepareStatement(sql2)) {
-                stmt.setInt(1, id);
-                stmt.executeUpdate();
-            } catch (Exception e) {
-                throw new Exception("Erreur lors de la suppression des associations colonne-projet pour l'ID: " + id, e);
-            }
-
             try (PreparedStatement stmt = connection.prepareStatement(sql3)) {
                 stmt.setInt(1, id);
                 try (ResultSet rs = stmt.executeQuery()) {
@@ -117,8 +101,48 @@ public class ColonneDAOImpl implements IColonneDAO {
             } catch (Exception e) {
                 throw new Exception("Erreur lors de la récupération et suppression des tâches associées pour la colonne avec l'ID: " + id, e);
             }
+            try (PreparedStatement stmt = connection.prepareStatement(sql2)) {
+                stmt.setInt(1, id);
+                stmt.executeUpdate();
+            } catch (Exception e) {
+                throw new Exception("Erreur lors de la suppression des associations colonne-projet pour l'ID: " + id, e);
+            }
+
+            try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+                stmt.setInt(1, id);
+                stmt.executeUpdate();
+            } catch (Exception e) {
+                throw new Exception("Erreur lors de la suppression de la colonne pour l'ID: " + id, e);
+            }
+
+
+
         } catch (Exception e) {
             throw new Exception("Erreur lors de la connexion à la base de données", e);
+        }
+    }
+
+    public void addTache(TacheAbstraite t, int idColonne) throws SQLException, ClassNotFoundException {
+        try(Connection conn = DBConnection.getConnection()){
+            String sql = "INSERT INTO colonne2tache (id_colonne, id_tache) VALUES (?, ?)";
+            try ( PreparedStatement stmt = conn.prepareStatement(sql)){
+                stmt.setInt(1, idColonne);
+                stmt.setInt(2, t.getId());
+                stmt.executeUpdate();
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
+
+    public void deplacerTacheDAO(int idColonneDest, int id) throws SQLException, ClassNotFoundException {
+        try(Connection conn = DBConnection.getConnection()){
+            String sql = "UPDATE colonne2tache SET id_colonne = ? WHERE id_tache = ?";
+            try (PreparedStatement stmt = conn.prepareStatement(sql)){
+                stmt.setInt(1, idColonneDest);
+                stmt.setInt(2, id);
+                stmt.executeUpdate();
+            }
         }
     }
 }
