@@ -4,10 +4,7 @@ import application.SousTache;
 import application.TacheAbstraite;
 import application.TacheMere;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.Statement;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -136,6 +133,30 @@ public class TacheDAOImpl implements ITacheDAO {
             stmt.executeUpdate(sql3);
         } catch (Exception e) {
             throw new Exception("Erreur lors de la suppression de la tâche avec l'ID: " + id, e);
+        }
+    }
+
+    public void updateEtat(String etat, int id) throws Exception {
+        String sql = "UPDATE Taches SET etat = ? WHERE id = ?";
+        try (Connection con = DBConnection.getConnection();) {
+            PreparedStatement ps = con.prepareStatement(sql);
+            ps.setString(1, etat);
+            ps.setInt(2, id);
+            ps.executeUpdate();
+        }
+    }
+
+    public void addDependanceDAO(int idF, int idM) {
+        String sql = "INSERT INTO dependance (id_tache_mere, id_sous_tache) VALUES (?, ?)";
+        try (Connection con = DBConnection.getConnection();) {
+            PreparedStatement ps = con.prepareStatement(sql);
+            ps.setInt(1, idM);
+            ps.setInt(2, idF);
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        } catch (ClassNotFoundException e) {
+            throw new RuntimeException(e);
         }
     }
 }
