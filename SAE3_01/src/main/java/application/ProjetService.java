@@ -3,12 +3,20 @@ package application;
 import application.DAO.ColonneDAOImpl;
 import application.DAO.ProjetDAOImpl;
 import application.DAO.TacheDAOImpl;
+import java.util.Date;
 
 public class ProjetService {
 
     private ProjetDAOImpl projetDAO = new ProjetDAOImpl();
     private ColonneDAOImpl colonneDAO = new ColonneDAOImpl();
     private TacheDAOImpl tacheDAO = new TacheDAOImpl();
+
+    public Projet creerProjet(String nom, Date dateCreation) throws Exception {
+        Projet projet = new Projet(nom, dateCreation);
+        projetDAO.save(projet);
+        return projet;
+
+    }
 
     public void ajouterColonne(Projet projet, Colonne colonne) throws Exception {
         if (projet == null || colonne == null) return;

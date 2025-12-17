@@ -158,7 +158,7 @@ public class TacheDAOImpl implements ITacheDAO {
     }
 
     public void updateEtat(String etat, int id) throws Exception {
-        String sql = "UPDATE Taches SET etat = ? WHERE id = ?";
+        String sql = "UPDATE Tache SET etat = ? WHERE id = ?";
         try (Connection con = DBConnection.getConnection();) {
             PreparedStatement ps = con.prepareStatement(sql);
             ps.setString(1, etat);
@@ -175,8 +175,6 @@ public class TacheDAOImpl implements ITacheDAO {
             ps.setInt(2, idF);
             ps.executeUpdate();
         } catch (SQLException e) {
-            throw new RuntimeException(e);
-        } catch (ClassNotFoundException e) {
             throw new RuntimeException(e);
         }
     }

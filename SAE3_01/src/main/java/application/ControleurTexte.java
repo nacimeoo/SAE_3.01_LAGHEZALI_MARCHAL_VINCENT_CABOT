@@ -32,8 +32,8 @@ public class ControleurTexte {
         switch (action) {
             case 1:
                 String nom = vue.lireChaine("Nom du projet");
-                this.projet = new Projet(nom, new Date());
-                projet.setId(1);
+                this.projet = projetService.creerProjet(nom,new Date());
+                System.out.println(projet.getId());
                 this.projet.enregistrerObservateur(this.vue);
                 vue.afficherMessage("Projet créé avec succès.");
                 break;
@@ -64,7 +64,7 @@ public class ControleurTexte {
 
                     t.setDureeEstimee(duree);
 
-                    projetService.ajouterTache(projet.trouverColonneParId(c),t);
+                    projetService.ajouterTache(projet.getColonnes().get(c),t);
                 }
                 break;
 
@@ -78,7 +78,7 @@ public class ControleurTexte {
                 if (projetExiste()) {
                     vue.afficherColonnes(projet);
                     int c = vue.lireEntier("Index colonne à supprimer");
-                    projetService.supprimerColonne(projet, projet.trouverColonneParId(c));
+                    projetService.supprimerColonne(projet, projet.getColonnes().get(c));
                 }
                 break;
 
@@ -140,11 +140,11 @@ public class ControleurTexte {
                 case 2:
                     vue.afficherColonnes(projet);
                     int newCol = vue.lireEntier("Vers colonne index");
-                    projetService.deplacerTache(projet.trouverColonneParId(colSel), projet.trouverColonneParId(newCol), laTache);
+                    projetService.deplacerTache(projet.getColonnes().get(colSel), projet.getColonnes().get(newCol), laTache);
                     sousMenu = false; // On sort car l'index a changé
                     break;
                 case 3:
-                    projetService.supprimerTache(projet.trouverColonneParId(colSel),laTache);
+                    projetService.supprimerTache(projet.getColonnes().get(colSel),laTache);
                     sousMenu = false;
                     break;
                 case 4:
@@ -152,7 +152,7 @@ public class ControleurTexte {
                     break;
                 case 5:
                     String libelle = vue.lireChaine("Libellé de l'étiquette");
-                    TacheAbstraite tacheAvecEtiquette = new Etiquette(laTache, libelle);
+                    TacheAbstraite tacheAvecEtiquette = new Etiquette(laTache, libelle, null);
                     projet.getColonnes().get(colSel).getTaches().set(tSel, tacheAvecEtiquette);
                     laTache = tacheAvecEtiquette;
                     projet.notifierObservateurs();

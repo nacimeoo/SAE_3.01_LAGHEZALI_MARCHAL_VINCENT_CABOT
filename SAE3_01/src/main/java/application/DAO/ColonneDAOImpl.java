@@ -86,20 +86,6 @@ public class ColonneDAOImpl implements IColonneDAO {
             String sql2 = "DELETE FROM projet2colonne WHERE id_colonne = ?";
             String sql3 = "SELECT id_tache FROM colonne2tache WHERE id_colonne = ?";
 
-            try (PreparedStatement stmt = connection.prepareStatement(sql)) {
-                stmt.setInt(1, id);
-                stmt.executeUpdate();
-            } catch (Exception e) {
-                throw new Exception("Erreur lors de la suppression de la colonne pour l'ID: " + id, e);
-            }
-
-            try (PreparedStatement stmt = connection.prepareStatement(sql2)) {
-                stmt.setInt(1, id);
-                stmt.executeUpdate();
-            } catch (Exception e) {
-                throw new Exception("Erreur lors de la suppression des associations colonne-projet pour l'ID: " + id, e);
-            }
-
             try (PreparedStatement stmt = connection.prepareStatement(sql3)) {
                 stmt.setInt(1, id);
                 try (ResultSet rs = stmt.executeQuery()) {
@@ -115,6 +101,22 @@ public class ColonneDAOImpl implements IColonneDAO {
             } catch (Exception e) {
                 throw new Exception("Erreur lors de la récupération et suppression des tâches associées pour la colonne avec l'ID: " + id, e);
             }
+            try (PreparedStatement stmt = connection.prepareStatement(sql2)) {
+                stmt.setInt(1, id);
+                stmt.executeUpdate();
+            } catch (Exception e) {
+                throw new Exception("Erreur lors de la suppression des associations colonne-projet pour l'ID: " + id, e);
+            }
+
+            try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+                stmt.setInt(1, id);
+                stmt.executeUpdate();
+            } catch (Exception e) {
+                throw new Exception("Erreur lors de la suppression de la colonne pour l'ID: " + id, e);
+            }
+
+
+
         } catch (Exception e) {
             throw new Exception("Erreur lors de la connexion à la base de données", e);
         }

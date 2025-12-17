@@ -61,7 +61,7 @@ class TacheTest {
      */
     @Test
     void testChangerEtat() {
-        SousTache st = new SousTache(1, "Petite tâche");
+        SousTache st = new SousTache( "Petite tâche");
         st.setEtat("En cours");
         assertEquals("En cours", st.getEtat());
     }

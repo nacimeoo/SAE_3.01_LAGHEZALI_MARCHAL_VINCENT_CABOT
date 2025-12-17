@@ -24,7 +24,7 @@ public class ControleurAjouterTache implements EventHandler<ActionEvent> {
 
             TacheAbstraite nouvelleTache = new TacheMere( nomTache);
 
-            projet.ajouterTacheDansColonne(nouvelleTache, 0);
+//            projet.ajouterTacheDansColonne(nouvelleTache, 0);
 
             champSaisie.clear();
         }
