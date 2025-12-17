@@ -21,4 +21,9 @@ public class Description extends TacheDecorateur{
     public String afficher(String indent) {
         return super.afficher(indent);
     }
+
+    @Override
+    public String afficherDetails() {
+        return super.afficherDetails() + "Description (Ajout) : " + this.libelle + "\n";
+    }
 }
