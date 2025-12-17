@@ -5,15 +5,18 @@ import application.vue.VueKanban;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.scene.control.TextField;
+import javafx.scene.control.Alert;
 
 public class ControleurAjouterTache implements EventHandler<ActionEvent> {
 
     private Projet projet;
+    private ProjetService service;
     private VueKanban vue;
     private TextField champSaisie;
 
-    public ControleurAjouterTache(Projet projet, VueKanban vue, TextField champSaisie) {
+    public ControleurAjouterTache(Projet projet, ProjetService service, VueKanban vue, TextField champSaisie) {
         this.projet = projet;
+        this.service = service;
         this.vue = vue;
         this.champSaisie = champSaisie;
     }
@@ -21,7 +24,6 @@ public class ControleurAjouterTache implements EventHandler<ActionEvent> {
     @Override
     public void handle(ActionEvent event) {
         String nomTache = champSaisie.getText();
-
         if (nomTache != null && !nomTache.trim().isEmpty() && !projet.getColonnes().isEmpty()) {
             Colonne colSelectionnee = vue.getColonneSelectionnee();
             int indexColonne = 0;
@@ -29,13 +31,23 @@ public class ControleurAjouterTache implements EventHandler<ActionEvent> {
                 indexColonne = projet.getColonnes().indexOf(colSelectionnee);
                 if (indexColonne == -1) indexColonne = 0;
             }
-
             TacheAbstraite nouvelleTache = new TacheMere(nomTache);
-            projet.ajouterTacheDansColonne(nouvelleTache, indexColonne);
-
-//            projet.ajouterTacheDansColonne(nouvelleTache, 0);
-
+            try {
+                service.ajouterTache(projet,colSelectionnee, nouvelleTache);
+                champSaisie.clear();
+            } catch (Exception e) {
+                e.printStackTrace();
+                afficherErreur("Erreur BDD", "Impossible d'ajouter la tâche : " + e.getMessage());
+            }
             champSaisie.clear();
         }
+    }
+
+    private void afficherErreur(String titre, String contenu) {
+        Alert alert = new Alert(Alert.AlertType.ERROR);
+        alert.setTitle(titre);
+        alert.setHeaderText(null);
+        alert.setContentText(contenu);
+        alert.showAndWait();
     }
 }

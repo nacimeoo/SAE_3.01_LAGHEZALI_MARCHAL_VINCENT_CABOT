@@ -64,7 +64,7 @@ public class ControleurTexte {
 
                     t.setDureeEstimee(duree);
 
-                    projetService.ajouterTache(projet.getColonnes().get(c),t);
+                    projetService.ajouterTache(projet,projet.getColonnes().get(c),t);
                 }
                 break;
 
@@ -140,11 +140,11 @@ public class ControleurTexte {
                 case 2:
                     vue.afficherColonnes(projet);
                     int newCol = vue.lireEntier("Vers colonne index");
-                    projetService.deplacerTache(projet.getColonnes().get(colSel), projet.getColonnes().get(newCol), laTache);
+                    projetService.deplacerTache(projet,projet.getColonnes().get(colSel), projet.getColonnes().get(newCol), laTache);
                     sousMenu = false; // On sort car l'index a changé
                     break;
                 case 3:
-                    projetService.supprimerTache(projet.getColonnes().get(colSel),laTache);
+                    projetService.supprimerTache(projet,projet.getColonnes().get(colSel),laTache);
                     sousMenu = false;
                     break;
                 case 4:
