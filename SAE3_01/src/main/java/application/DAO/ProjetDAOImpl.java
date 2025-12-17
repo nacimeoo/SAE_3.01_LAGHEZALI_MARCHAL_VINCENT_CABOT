@@ -117,15 +117,16 @@ public class ProjetDAOImpl implements IProjetDAO {
     @Override
     public List<Colonne> getColonnesByProjetId(int projetId) throws Exception {
         try (Connection conn = DBConnection.getConnection()) {
-            String sql = "SELECT c.id, c.nom FROM colonne c " +
-                    "INNER JOIN colonne2projet cp ON c.id = cp.id_colonne " +
+            String sql = "SELECT c.id, c.titre FROM colonne c " +
+                    "INNER JOIN projet2colonne cp ON c.id = cp.id_colonne " +
                     "WHERE cp.id_projet = ?";
             List<Colonne> colonnes = new ArrayList<>();
             try (PreparedStatement stmt = conn.prepareStatement(sql)) {
                 stmt.setInt(1, projetId);
                 try (ResultSet rs = stmt.executeQuery()) {
                     while (rs.next()) {
-                        Colonne colonne = new Colonne(rs.getString("nom"));
+                        Colonne colonne = new Colonne(rs.getString("titre"));
+                        colonne.setId(rs.getInt("id"));
                         colonnes.add(colonne);
                     }
                     return colonnes;
