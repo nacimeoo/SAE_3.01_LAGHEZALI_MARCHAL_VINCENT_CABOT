@@ -49,6 +49,8 @@ public class ControleurTexte {
                     int type = vue.lireEntier();
                     String nomT = vue.lireChaine("Nom de la tâche");
 
+                    int duree = vue.lireEntier("Durée estimée (en jour)");
+
                     vue.afficherMessage("Sélectionnez une colonne :");
                     vue.afficherColonnes(projet);
                     int c = vue.lireEntier("Index colonne");
@@ -57,6 +59,8 @@ public class ControleurTexte {
                             ? new TacheMere(nomT)
 
                             : new SousTache(nomT);
+
+                    t.setDureeEstimee(duree);
 
                     projet.ajouterTacheDansColonne(t, c);
                 }
@@ -135,7 +139,7 @@ public class ControleurTexte {
                     vue.afficherColonnes(projet);
                     int newCol = vue.lireEntier("Vers colonne index");
                     projet.deplacerTache(colSel, newCol, laTache);
-                    sousMenu = false; // On sort car l'index a changé
+                    sousMenu = false; 
                     break;
                 case 3:
                     projet.supprimerTacheDeColonne(laTache, colSel);
@@ -153,12 +157,12 @@ public class ControleurTexte {
                     vue.afficherMessage("Étiquette ajoutée avec succès.");
                     break;
                 case 6:
-                    String desc = vue.lireChaine("Descprition");
+                    String desc = vue.lireChaine("Description");
                     TacheAbstraite tacheAvecDesc = new Description(laTache, desc);
                     projet.getColonnes().get(colSel).getTaches().set(tSel, tacheAvecDesc);
                     laTache = tacheAvecDesc;
                     projet.notifierObservateurs();
-                    vue.afficherMessage("Description ajoutée avec succès.");
+                    vue.afficherMessage("Description ajoutée (visible uniquement dans les détails).");
                     break;
                 case 7:
                     vue.afficherMessage(laTache.afficherDetails());
