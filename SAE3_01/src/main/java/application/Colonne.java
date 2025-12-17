@@ -1,39 +1,51 @@
 package application;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
-public class Colonne{
-    protected int id;
-    protected String nom;
-    protected List<TacheAbstraite> taches;
+public class Colonne {
+
+    private int id;
+    private String nom;
+    private List<TacheAbstraite> taches = new ArrayList<>();
+
 
     public Colonne(String nom) {
         this.nom = nom;
-        this.taches = new ArrayList<>();
     }
+
+    public Colonne(int id, String nom) {
+        this.id = id;
+        this.nom = nom;
+    }
+
+    public int getId() {
+        return id;
+    }
+
     public void setId(int id) {
         this.id = id;
-    }
-    public void ajouterTache(TacheAbstraite ta){
-        taches.add(ta);
-    }
-
-    public void supprimerTache(TacheAbstraite ta){
-        taches.remove(ta);
-    }
-
-    public List<TacheAbstraite> getTaches() {
-        return taches;
     }
 
     public String getNom() {
         return nom;
     }
 
-    public String afficher(String indient) {
+    public List<TacheAbstraite> getTaches() {
+        return taches;
+    }
 
-        ArrayList<TacheAbstraite> dependances = new ArrayList<>();
+    public void ajouterTache(TacheAbstraite tache) {
+        if (tache != null) taches.add(tache);
+    }
+
+    public void supprimerTache(TacheAbstraite tache) {
+        taches.remove(tache);
+    }
+
+    public String afficher(String indent) {
+        List<TacheAbstraite> dependances = new ArrayList<>();
 
         for (TacheAbstraite t : taches) {
             if (t instanceof TacheMere) {
@@ -42,18 +54,15 @@ public class Colonne{
         }
         String s = "--- Colonne : " + nom + " ---";
 
-        // Affichage uniquement des racines
+        StringBuilder sb = new StringBuilder("--- Colonne : " + nom + " ---\n");
+
         for (TacheAbstraite t : taches) {
             if (!dependances.contains(t)) {
-                s += t.afficher(indient);
+                sb.append(t.afficher(indent));
             }
         }
 
-        return s;
+        return sb.toString();
     }
 
-
-    public int getId() {
-        return id;
-    }
 }

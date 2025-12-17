@@ -10,4 +10,5 @@ public interface ITacheDAO {
     List<TacheAbstraite> getTachesByColonneId(int colonneId) throws Exception;
     void save(TacheAbstraite tache) throws Exception;
     void delete(int id) throws Exception;
+    void update_detail(TacheAbstraite tache) throws Exception;
 }

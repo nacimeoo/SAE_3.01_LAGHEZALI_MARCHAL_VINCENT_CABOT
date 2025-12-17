@@ -37,7 +37,7 @@ public class ControleurSupprimerTache implements EventHandler<ActionEvent> {
         }
 
         if (indexColonne != -1) {
-            projet.supprimerTacheDeColonne(tacheASupprimer, indexColonne);
+//            projet.supprimerTacheDeColonne(tacheASupprimer, indexColonne);
             vue.resetSelection();
         }
     }

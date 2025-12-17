@@ -32,7 +32,7 @@ class TestTacheDAO {
     void tearDown() {
         try (Connection conn = DBConnection.getConnection();
              Statement stmt = conn.createStatement()) {
-            stmt.executeUpdate("DELETE FROM Taches WHERE nom LIKE '%Test'");
+            stmt.executeUpdate("DELETE FROM Tache WHERE nom LIKE '%Test'");
             stmt.executeUpdate("DELETE FROM colonne2tache WHERE id_tache NOT IN (SELECT id FROM Taches)");
         } catch (Exception e) {
         }
