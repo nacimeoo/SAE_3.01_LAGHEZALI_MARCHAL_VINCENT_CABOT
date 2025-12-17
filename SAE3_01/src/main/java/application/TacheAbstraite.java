@@ -96,12 +96,10 @@ public abstract class TacheAbstraite{
         sb.append("=======================================\n");
         sb.append("DÉTAILS DE LA TÂCHE\n");
         sb.append("=======================================\n");
-        sb.append("ID          : ").append(this.getId()).append("\n");
-        sb.append("Titre       : ").append(this.getNom()).append("\n");
-        sb.append("État        : ").append(this.getEtat()).append("\n");
-        sb.append("Description : ").append(
-                (this.description != null && !this.description.isEmpty()) ? this.description : "Aucune description"
-        ).append("\n");
+        sb.append("ID : ").append(this.getId()).append("\n");
+        sb.append("Titre : ").append(this.getNom()).append("\n");
+        sb.append("État : ").append(this.getEtat()).append("\n");
+        sb.append("duree Estimee : ").append(this.getDureeEstimee()).append(" jours").append("\n");
 
         return sb.toString();
     }
