@@ -137,7 +137,7 @@ public class ColonneDAOImpl implements IColonneDAO {
 
     public void deplacerTacheDAO(int idColonneDest, int id) throws SQLException, ClassNotFoundException {
         try(Connection conn = DBConnection.getConnection()){
-            String sql = "UPDATE FROM colonne2tache SET id_colonne = ? WHERE id_tache = ?";
+            String sql = "UPDATE colonne2tache SET id_colonne = ? WHERE id_tache = ?";
             try (PreparedStatement stmt = conn.prepareStatement(sql)){
                 stmt.setInt(1, idColonneDest);
                 stmt.setInt(2, id);
