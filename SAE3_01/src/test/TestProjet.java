@@ -151,7 +151,4 @@ class TestProjet {
 
         assertTrue(projet.getColonnes().isEmpty());
     }
-
-
-
 }
