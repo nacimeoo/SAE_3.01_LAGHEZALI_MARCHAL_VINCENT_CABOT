@@ -5,7 +5,7 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * Classe de test pour la hiérarchie des tâches (Composite Pattern)
  */
-class TacheTest {
+class TestTache {
 
     /**
      * Vérifie qu'une SousTache agit comme une "feuille"
