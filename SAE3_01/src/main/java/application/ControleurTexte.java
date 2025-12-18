@@ -139,7 +139,7 @@ public class ControleurTexte {
                     vue.afficherColonnes(projet);
                     int newCol = vue.lireEntier("Vers colonne index");
                     projet.deplacerTache(colSel, newCol, laTache);
-                    sousMenu = false; 
+                    sousMenu = false;
                     break;
                 case 3:
                     projet.supprimerTacheDeColonne(laTache, colSel);
