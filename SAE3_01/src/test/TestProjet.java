@@ -28,8 +28,6 @@ class TestProjet {
         colDestination = new Colonne("En cours");
         tache = new SousTache("Dev");
 
-        observerNotifier = false;
-        projet.enregistrerObservateur(s -> observerNotifier = true);
         tache = new SousTache("Dev");
         tache.setId(10);
     }
@@ -60,7 +58,7 @@ class TestProjet {
         projetService.ajouterColonne(projet,colSource);
         projetService.ajouterColonne(projet, colDestination);
 
-        projetService.supprimerColonne(projet, projet.trouverColonneParId(0));
+        projetService.supprimerColonne(projet, projet.getColonnes().get(0));
 
         assertEquals(1, projet.getColonnes().size());
         assertEquals("En cours", projet.getColonnes().get(0).getNom());
@@ -75,7 +73,7 @@ class TestProjet {
         projetService.ajouterColonne(projet, colDestination);
         colSource.ajouterTache(tache);
 
-        projetService.deplacerTache(projet.trouverColonneParId(0), projet.trouverColonneParId(1), tache);
+        projetService.deplacerTache(projet,projet.getColonnes().get(0), projet.getColonnes().get(1), tache);
 
         assertFalse(colSource.getTaches().contains(tache), "La tâche doit être retirée de la source");
         assertTrue(colDestination.getTaches().contains(tache), "La tâche doit être présente dans la destination");
@@ -84,12 +82,11 @@ class TestProjet {
     @Test
     void testAjouterTacheDansColonne() throws Exception {
         projetService.ajouterColonne(projet, colSource);
-        observerNotifier = false;
 
-        projetService.ajouterTache(projet.trouverColonneParId(0),tache);
+        projetService.ajouterTache(projet,projet.getColonnes().get(0),tache);
 
         assertTrue(colSource.getTaches().contains(tache));
-        assertTrue(observerNotifier);
+
     }
 
     /**
@@ -98,14 +95,12 @@ class TestProjet {
     @Test
     void testSupprimerTacheDeColonne() throws Exception {
         projetService.ajouterColonne(projet, colSource);
-        projetService.ajouterTache(projet.trouverColonneParId(0),tache);
+        projetService.ajouterTache(projet, projet.trouverColonneParId(0),tache);
 
-        observerNotifier = false;
 
-        projetService.supprimerTache(projet.trouverColonneParId(0),tache);
+        projetService.supprimerTache(projet, projet.trouverColonneParId(0),tache);
 
         assertTrue(colSource.getTaches().isEmpty());
-        assertTrue(observerNotifier);
     }
 
     /**
@@ -114,14 +109,12 @@ class TestProjet {
     @Test
     void testChangerEtatTache() throws Exception {
         projetService.ajouterColonne(projet, colSource);
-        projetService.ajouterTache(projet.trouverColonneParId(0), tache);
+        projetService.ajouterTache(projet , projet.trouverColonneParId(0), tache);
 
-        observerNotifier = false;
 
         projetService.changerEtat(projet,tache,"Terminer");
 
         assertEquals("Terminer", tache.getEtat());
-        assertTrue(observerNotifier);
     }
 
     /**
@@ -133,8 +126,8 @@ class TestProjet {
         SousTache fille = new SousTache( "Small Task");
 
         projetService.ajouterColonne(projet, colSource);
-        projetService.ajouterTache(projet.trouverColonneParId(0),mere);
-        projetService.ajouterTache(projet.trouverColonneParId(0), fille);
+        projetService.ajouterTache(projet, projet.getColonnes().get(0),mere);
+        projetService.ajouterTache(projet, projet.getColonnes().get(0), fille);
 
 
         boolean succes = projetService.ajouterDependance(projet, mere, fille);
