@@ -21,7 +21,7 @@ public class TestEtiquette {
      */
     @Test
     void testAjoutEtiquette() {
-        Etiquette tacheEtiquetee = new Etiquette(tacheDeBase, "nacime");
+        Etiquette tacheEtiquetee = new Etiquette(tacheDeBase, "nacime", null);
 
         assertEquals("Développer le Back-end", tacheEtiquetee.getNom());
         assertEquals("En cours", tacheEtiquetee.getEtat());
@@ -49,7 +49,7 @@ public class TestEtiquette {
      */
     @Test
     void testCumulDecorateurs() {
-        TacheAbstraite tacheV1 = new Etiquette(tacheDeBase, "Prioritaire");
+        TacheAbstraite tacheV1 = new Etiquette(tacheDeBase, "Prioritaire", null);
 
         TacheAbstraite tacheV2 = new Description(tacheV1, "Voir cahier des charges p.12");
 
@@ -69,7 +69,7 @@ public class TestEtiquette {
      */
     @Test
     void testModificationEtatViaDecorateur() {
-        Etiquette tacheEtiquetee = new Etiquette(tacheDeBase, "Review");
+        Etiquette tacheEtiquetee = new Etiquette(tacheDeBase, "Review", null);
 
         tacheEtiquetee.setEtat("Terminer");
 

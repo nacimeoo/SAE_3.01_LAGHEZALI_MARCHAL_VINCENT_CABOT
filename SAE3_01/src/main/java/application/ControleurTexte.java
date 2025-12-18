@@ -140,7 +140,7 @@ public class ControleurTexte {
                 case 2:
                     vue.afficherColonnes(projet);
                     int newCol = vue.lireEntier("Vers colonne index");
-                    projet.deplacerTache(colSel, newCol, laTache);
+                    projetService.deplacerTache(projet , projet.getColonnes().get(colSel), projet.getColonnes().get(newCol), laTache);
                     sousMenu = false;
                     projetService.deplacerTache(projet,projet.getColonnes().get(colSel), projet.getColonnes().get(newCol), laTache);
                     sousMenu = false; // On sort car l'index a changé
