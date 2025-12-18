@@ -13,5 +13,6 @@ public interface IEtiquetteDAO {
 
     void delete(int id) throws Exception;
     List<Etiquette> getEtiquettesByTacheId(int tacheId) throws Exception;
+    void attachEtiquetteToTache(int etiquetteId, int tacheId) throws Exception;
 
 }

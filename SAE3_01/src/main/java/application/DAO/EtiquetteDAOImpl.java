@@ -142,4 +142,19 @@ public class EtiquetteDAOImpl implements IEtiquetteDAO {
             throw new Exception("Erreur lors de la connexion", e);
         }
     }
+
+    public void attachEtiquetteToTache(int etiquetteId, int tacheId) throws Exception {
+        String sql = "INSERT INTO tache2etiquette (id_tache, id_etiquette) VALUES (?, ?)";
+        try (Connection connection = DBConnection.getConnection()) {
+            try (PreparedStatement stmt = connection.prepareStatement(sql);) {
+                stmt.setInt(1, tacheId);
+                stmt.setInt(2, etiquetteId);
+                stmt.executeUpdate();
+            } catch (Exception e){
+                throw new Exception("Erreur lors de l'exécution de l'attachement de l'étiquette avec l'ID: " + etiquetteId + " à la tâche avec l'ID: " + tacheId, e);
+            }
+        } catch (Exception e) {
+            throw new Exception("Erreur lors de la connexion", e);
+        }
+    }
 }
