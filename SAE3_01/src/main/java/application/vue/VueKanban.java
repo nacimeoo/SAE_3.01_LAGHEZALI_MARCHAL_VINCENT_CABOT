@@ -207,12 +207,17 @@ public class VueKanban extends BorderPane implements Observateur {
 
         card.setOnMouseClicked(e -> {
             e.consume();
-            if (vueTacheSelectionnee != null) {
-                vueTacheSelectionnee.setStyle("-fx-border-color: black; -fx-background-color: white;");
+            if (e.getClickCount() == 2) {
+                new ControleurEditerTache(projet, service, t).handle(e);
             }
-            tacheSelectionnee = t;
-            vueTacheSelectionnee = card;
-            card.setStyle("-fx-border-color: blue; -fx-border-width: 2; -fx-background-color: #e6f7ff;");
+            else {
+                if (vueTacheSelectionnee != null) {
+                    vueTacheSelectionnee.setStyle("-fx-border-color: black; -fx-background-color: white;");
+                }
+                tacheSelectionnee = t;
+                vueTacheSelectionnee = card;
+                card.setStyle("-fx-border-color: blue; -fx-border-width: 2; -fx-background-color: #e6f7ff;");
+            }
         });
 
         card.setOnDragDetected(e -> {
