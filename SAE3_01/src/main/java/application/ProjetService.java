@@ -1,6 +1,7 @@
 package application;
 
 import application.DAO.ColonneDAOImpl;
+import application.DAO.EtiquetteDAOImpl;
 import application.DAO.ProjetDAOImpl;
 import application.DAO.TacheDAOImpl;
 import java.util.Date;
@@ -10,6 +11,7 @@ public class ProjetService {
     private ProjetDAOImpl projetDAO = new ProjetDAOImpl();
     private ColonneDAOImpl colonneDAO = new ColonneDAOImpl();
     private TacheDAOImpl tacheDAO = new TacheDAOImpl();
+    private EtiquetteDAOImpl etiquetteDAO = new EtiquetteDAOImpl();
 
     public Projet creerProjet(String nom, Date dateCreation) throws Exception {
         Projet projet = new Projet(nom, dateCreation);
@@ -103,6 +105,19 @@ public class ProjetService {
         tacheDAO.updateEtat(etat, tache.getId());
 
         tache.setEtat(etat);
+        projet.notifierObservateurs();
+
+    }
+
+    public void ajouterEtiquette(Projet projet, int idCol,int indiceTache,TacheAbstraite tache, Etiquette et) throws Exception {
+        if (tache == null || et == null || projet == null) return;
+
+        etiquetteDAO.attachEtiquetteToTache(tache.getId(), et.getId());
+
+        TacheAbstraite tacheDecoree = new Etiquette(tache,et.getLibelle(),null);
+
+        projet.getColonnes().get(idCol).getTaches().set(indiceTache,tacheDecoree);
+
         projet.notifierObservateurs();
 
     }
