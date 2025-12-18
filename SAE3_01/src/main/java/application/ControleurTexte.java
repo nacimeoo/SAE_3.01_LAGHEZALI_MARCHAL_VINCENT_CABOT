@@ -5,17 +5,19 @@ import java.util.Date;
 
 public class ControleurTexte {
 
+    private ProjetService projetService;
     private Projet projet;
     private VueTexte vue;
     private boolean run;
 
-    public ControleurTexte(Projet projet, VueTexte vue) {
+    public ControleurTexte(ProjetService projetService,Projet projet, VueTexte vue) {
         this.projet = projet;
+        this.projetService = projetService;
         this.vue = vue;
         this.run = true;
     }
 
-    public void demarrer() {
+    public void demarrer() throws Exception {
         vue.afficherMessage("===========================================");
         vue.afficherMessage("=========== BIENVENU SUR FRIDAY ===========");
         vue.afficherMessage("===========================================\n");
@@ -26,12 +28,12 @@ public class ControleurTexte {
         }
     }
 
-    private void traiterAction(int action) {
+    private void traiterAction(int action) throws Exception {
         switch (action) {
             case 1:
                 String nom = vue.lireChaine("Nom du projet");
-                this.projet = new Projet(nom, new Date());
-                projet.setId(1);
+                this.projet = projetService.creerProjet(nom,new Date());
+                System.out.println(projet.getId());
                 this.projet.enregistrerObservateur(this.vue);
                 vue.afficherMessage("Projet créé avec succès.");
                 break;
@@ -39,7 +41,7 @@ public class ControleurTexte {
             case 2:
                 if (projetExiste()) {
                     String nomCol = vue.lireChaine("Nom de la colonne");
-                    projet.ajouterColonne(new Colonne(nomCol));
+                    projetService.ajouterColonne(projet,new Colonne(nomCol));
                 }
                 break;
 
@@ -62,7 +64,7 @@ public class ControleurTexte {
 
                     t.setDureeEstimee(duree);
 
-                    projet.ajouterTacheDansColonne(t, c);
+                    projetService.ajouterTache(projet,projet.getColonnes().get(c),t);
                 }
                 break;
 
@@ -76,7 +78,7 @@ public class ControleurTexte {
                 if (projetExiste()) {
                     vue.afficherColonnes(projet);
                     int c = vue.lireEntier("Index colonne à supprimer");
-                    projet.supprimerColonne(c);
+                    projetService.supprimerColonne(projet, projet.getColonnes().get(c));
                 }
                 break;
 
@@ -96,7 +98,7 @@ public class ControleurTexte {
         }
     }
 
-    private void gererMenuTache() {
+    private void gererMenuTache() throws Exception {
         vue.afficherColonnes(projet);
         int colSel = vue.lireEntier("Choisir colonne");
 
@@ -140,9 +142,11 @@ public class ControleurTexte {
                     int newCol = vue.lireEntier("Vers colonne index");
                     projet.deplacerTache(colSel, newCol, laTache);
                     sousMenu = false;
+                    projetService.deplacerTache(projet,projet.getColonnes().get(colSel), projet.getColonnes().get(newCol), laTache);
+                    sousMenu = false; // On sort car l'index a changé
                     break;
                 case 3:
-                    projet.supprimerTacheDeColonne(laTache, colSel);
+                    projetService.supprimerTache(projet,projet.getColonnes().get(colSel),laTache);
                     sousMenu = false;
                     break;
                 case 4:
@@ -150,7 +154,7 @@ public class ControleurTexte {
                     break;
                 case 5:
                     String libelle = vue.lireChaine("Libellé de l'étiquette");
-                    TacheAbstraite tacheAvecEtiquette = new Etiquette(laTache, libelle);
+                    TacheAbstraite tacheAvecEtiquette = new Etiquette(laTache, libelle, null);
                     projet.getColonnes().get(colSel).getTaches().set(tSel, tacheAvecEtiquette);
                     laTache = tacheAvecEtiquette;
                     projet.notifierObservateurs();
@@ -176,7 +180,7 @@ public class ControleurTexte {
         }
     }
 
-    private void ajouterDependance(TacheMere mere) {
+    private void ajouterDependance(TacheMere mere) throws Exception {
         vue.afficherMessage("Selectionnez la colonne de la sous-tâche cible :");
         vue.afficherColonnes(projet);
         int c = vue.lireEntier();
@@ -188,12 +192,12 @@ public class ControleurTexte {
         var col = projet.getColonnes().get(c);
         if (t >= 0 && t < col.getTaches().size()) {
             TacheAbstraite cible = col.getTaches().get(t);
-            projet.ajouterDependanceTache(mere, cible);
+            projetService.ajouterDependance(projet,mere, cible);
             vue.afficherMessage("Dépendance ajoutée.");
         }
     }
 
-    private void changerEtat(TacheAbstraite t) {
+        private void changerEtat(TacheAbstraite t) throws Exception {
         vue.afficherMessage("1- A faire, 2- En cours, 3- Terminer, 4- En attente");
         int e = vue.lireEntier();
         String etat = switch(e) {
@@ -208,7 +212,7 @@ public class ControleurTexte {
             if (etat.equals("En cours") && !t.verifierDependance()) {
                 vue.afficherMessage("⚠ Attention : Dépendances non terminées !");
             }
-            projet.changerEtatTache(t, etat);
+            projetService.changerEtat(projet,t, etat);
         }
     }
 

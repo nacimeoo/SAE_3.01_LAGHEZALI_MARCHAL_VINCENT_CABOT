@@ -1,5 +1,7 @@
 package application;
 
+import application.DAO.TacheDAOImpl;
+
 import java.util.ArrayList;
 import java.util.Date;
 

@@ -3,10 +3,7 @@ package application.DAO;
 import application.Colonne;
 import application.Projet;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.Statement;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -120,15 +117,16 @@ public class ProjetDAOImpl implements IProjetDAO {
     @Override
     public List<Colonne> getColonnesByProjetId(int projetId) throws Exception {
         try (Connection conn = DBConnection.getConnection()) {
-            String sql = "SELECT c.id, c.nom FROM colonne c " +
-                    "INNER JOIN colonne2projet cp ON c.id = cp.id_colonne " +
+            String sql = "SELECT c.id, c.titre FROM colonne c " +
+                    "INNER JOIN projet2colonne cp ON c.id = cp.id_colonne " +
                     "WHERE cp.id_projet = ?";
             List<Colonne> colonnes = new ArrayList<>();
             try (PreparedStatement stmt = conn.prepareStatement(sql)) {
                 stmt.setInt(1, projetId);
                 try (ResultSet rs = stmt.executeQuery()) {
                     while (rs.next()) {
-                        Colonne colonne = new Colonne(rs.getString("nom"));
+                        Colonne colonne = new Colonne(rs.getString("titre"));
+                        colonne.setId(rs.getInt("id"));
                         colonnes.add(colonne);
                     }
                     return colonnes;
@@ -138,6 +136,19 @@ public class ProjetDAOImpl implements IProjetDAO {
             }
         } catch (Exception e) {
             throw new Exception("Erreur lors de la connexion", e);
+        }
+    }
+
+    public void addColonne(Colonne colonne, int idProj) throws SQLException, ClassNotFoundException {
+        try(Connection conn = DBConnection.getConnection()){
+            String sql = "INSERT INTO projet2colonne (id_projet, id_colonne) VALUES (?, ?)";
+            try ( PreparedStatement stmt = conn.prepareStatement(sql)){
+                stmt.setInt(1, idProj);
+                stmt.setInt(2, colonne.getId());
+                stmt.executeUpdate();
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            }
         }
     }
 }
