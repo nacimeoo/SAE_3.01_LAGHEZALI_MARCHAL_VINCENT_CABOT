@@ -63,7 +63,7 @@ public class TacheDAOImpl implements ITacheDAO {
 
     @Override
     public List<TacheAbstraite> getTachesByColonneId(int colonneId) throws Exception {
-        String sql = "SELECT * FROM Tache" +
+        String sql = "SELECT * FROM Tache " +
                 "inner join colonne2tache on colonne2tache.id_tache = tache.id "
                 + "WHERE colonne2tache.id_colonne = " + colonneId;
         List<TacheAbstraite> taches = new ArrayList<TacheAbstraite>();

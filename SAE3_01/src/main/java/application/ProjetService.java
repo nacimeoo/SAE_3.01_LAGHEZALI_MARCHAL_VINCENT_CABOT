@@ -44,7 +44,7 @@ public class ProjetService {
         projet.notifierObservateurs();
     }
 
-    public void ajouterTache(Colonne colonne, TacheAbstraite tache) throws Exception {
+    public void ajouterTache(Projet projet, Colonne colonne, TacheAbstraite tache) throws Exception {
         if (colonne == null || tache == null) return;
 
 
@@ -55,9 +55,11 @@ public class ProjetService {
 
 
         colonne.ajouterTache(tache);
+        projet.notifierObservateurs();
+
     }
 
-    public void supprimerTache(Colonne colonne, TacheAbstraite tache) throws Exception {
+    public void supprimerTache(Projet projet, Colonne colonne, TacheAbstraite tache) throws Exception {
         if (colonne == null || tache == null) return;
 
 
@@ -65,9 +67,11 @@ public class ProjetService {
 
 
         colonne.supprimerTache(tache);
+        projet.notifierObservateurs();
+
     }
 
-    public void deplacerTache(Colonne src, Colonne dest, TacheAbstraite tache) throws Exception {
+    public void deplacerTache(Projet projet, Colonne src, Colonne dest, TacheAbstraite tache) throws Exception {
         if (src == null || dest == null || tache == null) return;
 
 
@@ -76,6 +80,8 @@ public class ProjetService {
 
         src.supprimerTache(tache);
         dest.ajouterTache(tache);
+        projet.notifierObservateurs();
+
     }
 
     public boolean ajouterDependance(Projet projet,TacheMere mere, TacheAbstraite fille) throws Exception {
@@ -86,6 +92,7 @@ public class ProjetService {
         mere.ajouterDependance(fille);
 
         boolean succes = mere.ajouterDependance(fille);
+        projet.notifierObservateurs();
 
         return succes;
     }
@@ -96,5 +103,7 @@ public class ProjetService {
         tacheDAO.updateEtat(etat, tache.getId());
 
         tache.setEtat(etat);
+        projet.notifierObservateurs();
+
     }
 }
