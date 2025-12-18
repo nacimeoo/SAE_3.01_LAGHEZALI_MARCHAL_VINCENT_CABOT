@@ -44,15 +44,7 @@ public class ControleurSupprimerTache implements EventHandler<ActionEvent> {
                 vue.resetSelection();
             } catch (Exception e) {
                 e.printStackTrace();
-                afficherErreur("Erreur", "Impossible de supprimer la tâche.");
             }
         }
-    }
-
-    private void afficherErreur(String titre, String contenu) {
-        Alert alert = new Alert(Alert.AlertType.ERROR);
-        alert.setTitle(titre);
-        alert.setContentText(contenu);
-        alert.showAndWait();
     }
 }
