@@ -37,17 +37,8 @@ public class ControleurAjouterTache implements EventHandler<ActionEvent> {
                 champSaisie.clear();
             } catch (Exception e) {
                 e.printStackTrace();
-                afficherErreur("Erreur BDD", "Impossible d'ajouter la tâche : " + e.getMessage());
             }
             champSaisie.clear();
         }
-    }
-
-    private void afficherErreur(String titre, String contenu) {
-        Alert alert = new Alert(Alert.AlertType.ERROR);
-        alert.setTitle(titre);
-        alert.setHeaderText(null);
-        alert.setContentText(contenu);
-        alert.showAndWait();
     }
 }

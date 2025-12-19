@@ -180,7 +180,7 @@ public class TacheDAOImpl implements ITacheDAO {
     }
 
     public void update_detail(TacheAbstraite tache) throws Exception {
-        String sql = "UPDATE Tache SET titre = ?, descrption = ?, priorite = ?, etat = ? WHERE id = ?";
+        String sql = "UPDATE Tache SET titre = ?, description = ?, priorite = ?, etat = ? WHERE id = ?";
         try (Connection con = DBConnection.getConnection();) {
             PreparedStatement stmt = con.prepareStatement(sql);
             stmt.setString(1, tache.getNom());

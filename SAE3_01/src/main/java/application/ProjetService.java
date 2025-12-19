@@ -121,4 +121,11 @@ public class ProjetService {
         projet.notifierObservateurs();
 
     }
+
+    public void modifierTache(Projet projet, TacheAbstraite tache) throws Exception {
+        if (projet == null || tache == null) return;
+        tacheDAO.update_detail(tache);
+        projet.notifierObservateurs();
+    }
+
 }
