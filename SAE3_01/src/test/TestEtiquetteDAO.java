@@ -34,9 +34,9 @@ class TestEtiquetteDAO {
     void tearDown() {
         try (Connection conn = DBConnection.getConnection();
              Statement stmt = conn.createStatement()) {
-//            stmt.executeUpdate("DELETE FROM etiquette WHERE nom LIKE 'Test%' OR nom = 'Urgent'");
-//            stmt.executeUpdate("DELETE FROM Tache WHERE nom = 'Urgent'");
-//            stmt.executeUpdate("DELETE FROM tache2etiquette WHERE id_tache NOT IN (SELECT id FROM Tache)");
+            stmt.executeUpdate("DELETE FROM etiquette WHERE nom LIKE 'Test%' OR nom = 'Urgent'");
+            stmt.executeUpdate("DELETE FROM Tache WHERE nom = 'Urgent' or nom LIKE 'Test%'");
+            stmt.executeUpdate("DELETE FROM tache2etiquette WHERE id_tache NOT IN (SELECT id FROM Tache)");
         } catch (Exception e) {
         }
     }
@@ -56,15 +56,19 @@ class TestEtiquetteDAO {
 
     @Test
     void testGetAllEtiquettes() throws Exception {
-        etiquetteDAO.save(new Etiquette(tache, "Test1", "#000000"));
-        etiquetteDAO.save(new Etiquette(tache, "Test2", "#FFFFFF"));
+        Etiquette e1 = new Etiquette(tache, "Test1", "#000000");
+        Etiquette e2 = new Etiquette(tache, "Test2", "#FFFFFF");
+
+        etiquetteDAO.save(e1);
+        etiquetteDAO.save(e2);
+
+        etiquetteDAO.attachEtiquetteToTache(e1.getId(), tache.getId());
+        etiquetteDAO.attachEtiquetteToTache(e2.getId(), tache.getId());
 
         List<Etiquette> etiquettes = etiquetteDAO.getAllEtiquettes();
 
-
-        assertTrue(etiquettes.size() >= 2);
-        assertTrue(etiquettes.stream().anyMatch(e -> e.getLibelle().equals("Test1")));
-        assertTrue(etiquettes.stream().anyMatch(e -> e.getLibelle().equals("Test2")));
+        assertEquals("Test1", etiquettes.get(0).getLibelle());
+        assertEquals("Test2", etiquettes.get(1).getLibelle());
     }
 
     @Test

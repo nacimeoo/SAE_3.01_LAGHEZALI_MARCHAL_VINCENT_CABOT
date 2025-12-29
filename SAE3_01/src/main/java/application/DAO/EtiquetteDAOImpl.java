@@ -34,6 +34,7 @@ public class EtiquetteDAOImpl implements IEtiquetteDAO {
         }
     }
 
+    @Override
     public List<Etiquette> getAllEtiquettes() throws Exception {
         List<Etiquette> etiquettes = new ArrayList<>();
         String sql = "SELECT e.*, te.id_tache FROM Etiquette e " +
@@ -47,9 +48,9 @@ public class EtiquetteDAOImpl implements IEtiquetteDAO {
 
             while (rs.next()) {
                 int idTache = rs.getInt("id_tache");
-
                 TacheAbstraite tache = tacheDAO.getTacheById(idTache);
 
+                // Vérification indispensable avant de décorer
                 if (tache != null) {
                     Etiquette etiquette = new Etiquette(tache, rs.getString("nom"), rs.getString("couleur"));
                     etiquette.setId(rs.getInt("id"));
@@ -57,7 +58,7 @@ public class EtiquetteDAOImpl implements IEtiquetteDAO {
                 }
             }
         } catch (Exception e) {
-            throw new Exception("Erreur lors de la récupération des étiquettes avec leurs tâches", e);
+            throw new Exception("Erreur récupération", e);
         }
         return etiquettes;
     }
