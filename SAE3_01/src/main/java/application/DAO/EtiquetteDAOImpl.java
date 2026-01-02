@@ -6,6 +6,7 @@ import application.TacheAbstraite;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -35,57 +36,58 @@ public class EtiquetteDAOImpl implements IEtiquetteDAO {
 
     @Override
     public List<Etiquette> getAllEtiquettes() throws Exception {
-        try (Connection connection = DBConnection.getConnection()) {
-            String sql = "SELECT * FROM Etiquette";
-            TacheDAOImpl tacheDAO = new TacheDAOImpl();
-            List<TacheAbstraite> taches = tacheDAO.getAllTaches();
-            String sql2 = " SELECT * FROM tache2etiquette WHERE id_etiquette = ?";
-            PreparedStatement stmt = connection.prepareStatement(sql);
-            try (ResultSet rs = stmt.executeQuery();) {
-                while (rs != null && rs.next()) {
-                    for (TacheAbstraite tache : taches) {
-                        PreparedStatement stmt2 = connection.prepareStatement(sql2);
-                        stmt2.setInt(1, rs.getInt("id"));
-                        try (ResultSet rs2 = stmt2.executeQuery();) {
-                            while (rs2 != null && rs2.next()) {
-                                if (rs2.getInt("id_tache") == tache.getId()) {
-                                    Etiquette etiquette = new Etiquette(tache, rs.getString("nom"), rs.getString("couleur"));
-                                    etiquette.setId(rs.getInt("id"));
-                                    List<Etiquette> etiquettes = new ArrayList<>();
-                                    etiquettes.add(etiquette);
-                                    return etiquettes;
-                                }
-                            }
-                        }
-                    }
+        List<Etiquette> etiquettes = new ArrayList<>();
+        String sql = "SELECT e.*, te.id_tache FROM Etiquette e " +
+                "JOIN tache2etiquette te ON e.id = te.id_etiquette";
+
+        TacheDAOImpl tacheDAO = new TacheDAOImpl();
+
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement stmt = connection.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
+
+            while (rs.next()) {
+                int idTache = rs.getInt("id_tache");
+                TacheAbstraite tache = tacheDAO.getTacheById(idTache);
+
+                // Vérification indispensable avant de décorer
+                if (tache != null) {
+                    Etiquette etiquette = new Etiquette(tache, rs.getString("nom"), rs.getString("couleur"));
+                    etiquette.setId(rs.getInt("id"));
+                    etiquettes.add(etiquette);
                 }
-            } catch (Exception e) {
-                throw new Exception("Erreur lors de la récupération de toutes les étiquettes", e);
             }
         } catch (Exception e) {
-            throw new Exception("Erreur lors de la connection", e);
+            throw new Exception("Erreur récupération", e);
         }
-        return null;
+        return etiquettes;
     }
 
-    @Override
     public void save(Etiquette etiquette) throws Exception {
-        String sqlExist = "Select * from Etiquette where id = ?";
+        String sqlExist = "SELECT COUNT(*) FROM Etiquette WHERE id = ?";
         try (Connection connection = DBConnection.getConnection()) {
-            PreparedStatement stmtExist = connection.prepareStatement(sqlExist);
-            stmtExist.setInt(1, etiquette.getId());
-            try (ResultSet rs = stmtExist.executeQuery()) {
-                if (rs.next()) {
-                    String sqlUpdate = "UPDATE Etiquette SET nom = ?, couleur = ? WHERE id = ?";
-                    PreparedStatement stmtUpdate = connection.prepareStatement(sqlUpdate);
-                    stmtUpdate.setString(1, etiquette.getNom());
+            boolean exists = false;
+            try (PreparedStatement stmtExist = connection.prepareStatement(sqlExist)) {
+                stmtExist.setInt(1, etiquette.getId());
+                try (ResultSet rs = stmtExist.executeQuery()) {
+                    if (rs.next()) {
+                        exists = rs.getInt(1) > 0;
+                    }
+                }
+            }
+
+            if (exists) {
+                String sqlUpdate = "UPDATE Etiquette SET nom = ?, couleur = ? WHERE id = ?";
+                try (PreparedStatement stmtUpdate = connection.prepareStatement(sqlUpdate)) {
+                    stmtUpdate.setString(1, etiquette.getLibelle());
                     stmtUpdate.setString(2, etiquette.getCouleur());
                     stmtUpdate.setInt(3, etiquette.getId());
                     stmtUpdate.executeUpdate();
-                } else {
-                    String sqlInsert = "INSERT INTO Etiquette (nom, couleur) VALUES (?, ?)";
-                    PreparedStatement stmtInsert = connection.prepareStatement(sqlInsert, PreparedStatement.RETURN_GENERATED_KEYS);
-                    stmtInsert.setString(1, etiquette.getNom());
+                }
+            } else {
+                String sqlInsert = "INSERT INTO Etiquette (nom, couleur) VALUES (?, ?)";
+                try (PreparedStatement stmtInsert = connection.prepareStatement(sqlInsert, Statement.RETURN_GENERATED_KEYS)) {
+                    stmtInsert.setString(1, etiquette.getLibelle());
                     stmtInsert.setString(2, etiquette.getCouleur());
                     stmtInsert.executeUpdate();
                     try (ResultSet generatedKeys = stmtInsert.getGeneratedKeys()) {
@@ -94,13 +96,10 @@ public class EtiquetteDAOImpl implements IEtiquetteDAO {
                         }
                     }
                 }
-            } catch (Exception e) {
-                throw new Exception("Erreur lors de la vérification de l'existence de l'étiquette", e);
             }
         } catch (Exception e) {
-            throw new Exception("Erreur lors de la connection", e);
+            throw new Exception("Erreur lors de la sauvegarde de l'étiquette", e);
         }
-
     }
 
     @Override

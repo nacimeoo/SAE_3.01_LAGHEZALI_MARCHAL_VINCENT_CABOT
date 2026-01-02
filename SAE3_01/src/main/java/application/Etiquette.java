@@ -16,6 +16,10 @@ public class Etiquette extends TacheDecorateur{
         return libelle;
     }
 
+    public int getId() {
+        return id;
+    }
+
     public void setLibelle(String libelle) {
         this.libelle = libelle;
     }
@@ -32,5 +36,17 @@ public class Etiquette extends TacheDecorateur{
 
     public String getCouleur() {
         return couleur;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
+
+    public void setCouleur(String couleur) {
+        this.couleur = couleur;
+    }
+
+    public String setLibelle() {
+        return libelle;
     }
 }
