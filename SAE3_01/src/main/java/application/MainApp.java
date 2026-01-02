@@ -1,64 +1,51 @@
 package application;
 
+import application.controller.ControleurRetourDashboard;
+import application.vue.VueDashboard;
 import application.vue.VueKanban;
 import javafx.application.Application;
 import javafx.scene.Scene;
+import javafx.scene.control.Button;
+import javafx.scene.layout.HBox;
 import javafx.stage.Stage;
-import application.DAO.*;
-
-import java.util.Date;
-import java.util.List;
 
 public class MainApp extends Application {
 
+    private Stage primaryStage;
+    private ProjetService projetService;
+
     @Override
     public void start(Stage primaryStage) {
-        try {
-            ProjetService service = new ProjetService();
-            Projet projet = chargerProjetComplet(1);
+        this.primaryStage = primaryStage;
+        this.primaryStage.setTitle("FRIDAY");
+        this.projetService = new ProjetService();
 
-            if (projet == null) {
-                System.out.println("Projet non trouvé, création d'un nouveau...");
-                projet = service.creerProjet("Mon Nouveau Projet", new Date());
-                service.ajouterColonne(projet, new Colonne("A faire"));
-                service.ajouterColonne(projet, new Colonne("En cours"));
-            }
-
-            VueKanban root = new VueKanban(projet, service);
-
-            Scene scene = new Scene(root, 1000, 600);
-            primaryStage.setTitle("FRIDAY - " + projet.getNom());
-            primaryStage.setScene(scene);
-            primaryStage.show();
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        afficherDashboard();
+        this.primaryStage.show();
     }
 
-    private Projet chargerProjetComplet(int idProjet) {
-        try {
-            ProjetDAOImpl projetDAO = new ProjetDAOImpl();
-            TacheDAOImpl tacheDAO = new TacheDAOImpl();
+    public void afficherDashboard() {
+        VueDashboard dashboard = new VueDashboard(this);
+        Scene scene = new Scene(dashboard, 800, 500);
+        primaryStage.setScene(scene);
+        primaryStage.setTitle("FRIDAY - Dashboard");
+    }
 
-            Projet p = projetDAO.getProjetById(idProjet);
-            if (p == null) return null;
-
-            List<Colonne> colonnes = projetDAO.getColonnesByProjetId(p.getId());
-
-            for (Colonne col : colonnes) {
-                List<TacheAbstraite> taches = tacheDAO.getTachesByColonneId(col.getId());
-                for(TacheAbstraite t : taches) {
-                    col.ajouterTache(t);
+    public void afficherKanban(Projet projetSelectionne) {
+        Projet projetComplet = projetService.chargerProjetComplet(projetSelectionne.getId());
+        if (projetComplet != null) {
+            VueKanban kanban = new VueKanban(projetComplet, projetService);
+            if (kanban.getTop() instanceof HBox) {
+                HBox header = (HBox) kanban.getTop();
+                if (!header.getChildren().isEmpty() && header.getChildren().get(0) instanceof Button) {
+                    Button btnBack = (Button) header.getChildren().get(0);
+                    btnBack.setOnAction(new ControleurRetourDashboard(this));
                 }
-                p.getColonnes().add(col);
             }
 
-            return p;
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            return null;
+            Scene scene = new Scene(kanban, 1000, 600);
+            primaryStage.setScene(scene);
+            primaryStage.setTitle("FRIDAY - " + projetComplet.getNom());
         }
     }
 
