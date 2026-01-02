@@ -5,6 +5,7 @@ import application.DAO.EtiquetteDAOImpl;
 import application.DAO.ProjetDAOImpl;
 import application.DAO.TacheDAOImpl;
 import java.util.Date;
+import java.util.List;
 
 public class ProjetService {
 
@@ -126,6 +127,31 @@ public class ProjetService {
         if (projet == null || tache == null) return;
         tacheDAO.update_detail(tache);
         projet.notifierObservateurs();
+    }
+
+    public Projet chargerProjetComplet(int idProjet) {
+        try {
+            Projet p = projetDAO.getProjetById(idProjet);
+            if (p == null) return null;
+            List<Colonne> colonnes = projetDAO.getColonnesByProjetId(p.getId());
+            for (Colonne col : colonnes) {
+                List<TacheAbstraite> taches = tacheDAO.getTachesByColonneId(col.getId());
+
+                for (TacheAbstraite t : taches) {
+                    List<Etiquette> etiquettes = etiquetteDAO.getEtiquettesByTacheId(t.getId());
+                    for (Etiquette eInfo : etiquettes) {
+                        t = new Etiquette(t, eInfo.getLibelle(), eInfo.getCouleur());
+                    }
+                    col.ajouterTache(t);
+                }
+                p.getColonnes().add(col);
+            }
+            return p;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 
 }
