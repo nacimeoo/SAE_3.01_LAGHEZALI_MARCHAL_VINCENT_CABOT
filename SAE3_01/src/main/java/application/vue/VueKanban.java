@@ -78,7 +78,7 @@ public class VueKanban extends BorderPane implements Observateur {
 
         addTacheBox.getChildren().addAll(lblAdd, tfTask, btnAdd);
 
-        Button btnDelete = new Button("Supprimer Sélection");
+        Button btnDelete = new Button("Supprimer Tâche");
         btnDelete.setMaxWidth(Double.MAX_VALUE);
         btnDelete.setStyle("-fx-background-color: #ffcccc; -fx-border-color: red;");
 
