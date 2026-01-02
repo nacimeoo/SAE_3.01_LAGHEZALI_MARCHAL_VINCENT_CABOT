@@ -2,16 +2,18 @@ package application;
 
 import application.DAO.TacheDAOImpl;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.Locale;
 
 public abstract class TacheAbstraite{
     protected int id;
     protected String nom;
     protected String description;
     protected int priorite;
-    protected Date dateDebut;
-    protected Date dateFin;
+    protected LocalDate dateDebut;
+    protected LocalDate dateFin;
     protected int dureeEstimee;
     protected String etat;
 
@@ -33,6 +35,9 @@ public abstract class TacheAbstraite{
         return nom;
     }
 
+    public LocalDate getDate(){
+        return dateDebut;
+    }
     public void setNom(String nom) {
         this.nom = nom;
     }
@@ -53,19 +58,19 @@ public abstract class TacheAbstraite{
         this.priorite = priorite;
     }
 
-    public Date getDateDebut() {
+    public LocalDate getDateDebut() {
         return dateDebut;
     }
 
-    public void setDateDebut(Date dateDebut) {
+    public void setDateDebut(LocalDate dateDebut) {
         this.dateDebut = dateDebut;
     }
 
-    public Date getDateFin() {
+    public LocalDate getDateFin() {
         return dateFin;
     }
 
-    public void setDateFin(Date dateFin) {
+    public void setDateFin(LocalDate dateFin) {
         this.dateFin = dateFin;
     }
 
