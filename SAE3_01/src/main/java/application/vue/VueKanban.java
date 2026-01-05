@@ -29,7 +29,7 @@ public class VueKanban extends BorderPane implements Observateur {
     private TextField tfTask;
 
     private TacheAbstraite tacheSelectionnee = null;
-    private HBox vueTacheSelectionnee = null;
+    private VBox vueTacheSelectionnee = null;
     private Colonne colonneSelectionnee = null;
     private VBox vueColonneSelectionnee = null;
 
@@ -195,56 +195,94 @@ public class VueKanban extends BorderPane implements Observateur {
 
     private VBox createTaskCard(TacheAbstraite t, int indexColonneSource) {
         VBox cardContainer = new VBox(5);
+        cardContainer.setPadding(new Insets(10));
+        cardContainer.setStyle("-fx-border-color: black; -fx-background-color: white; -fx-background-radius: 5; -fx-border-radius: 5;");
 
-        HBox cardHeader = new HBox();
-        cardHeader.setPadding(new Insets(10));
-        cardHeader.setStyle("-fx-border-color: black; -fx-background-color: white;");
-        cardHeader.getChildren().add(new Label(t.getNom()));
+        HBox cardHeader = new HBox(10);
+        cardHeader.setAlignment(Pos.CENTER_LEFT);
 
-        cardHeader.setOnDragDetected(e -> {
-            Dragboard db = cardHeader.startDragAndDrop(TransferMode.MOVE);
+        Label lblNom = new Label(t.getNom());
+        lblNom.setFont(Font.font("Arial", FontWeight.BOLD, 13));
+        cardHeader.getChildren().add(lblNom);
+
+        TacheAbstraite temp = t;
+        while (temp instanceof TacheDecorateur) {
+            if (temp instanceof Etiquette) {
+                Etiquette e = (Etiquette) temp;
+                Label labelEtiquette = new Label(e.getLibelle());
+                labelEtiquette.setStyle("-fx-background-color: #e0e0e0; -fx-padding: 2 5 2 5; -fx-background-radius: 3; -fx-font-size: 10;");
+                cardHeader.getChildren().add(labelEtiquette);
+            }
+            temp = ((TacheDecorateur) temp).getTacheDecoree();
+        }
+
+        cardContainer.getChildren().add(cardHeader);
+
+        cardContainer.setOnMouseClicked(e -> {
+            e.consume();
+
+            if (e.getClickCount() == 2) {
+                new ControleurEditerTache(projet, service, t).handle(e);
+            } else {
+                if (vueTacheSelectionnee != null) {
+                    ((Region)vueTacheSelectionnee).setStyle("-fx-border-color: black; -fx-background-color: white; -fx-background-radius: 5; -fx-border-radius: 5;");
+                }
+                tacheSelectionnee = t;
+                vueTacheSelectionnee = cardContainer;
+                cardContainer.setStyle("-fx-border-color: blue; -fx-border-width: 2; -fx-background-color: #e6f7ff; -fx-background-radius: 5; -fx-border-radius: 5;");
+            }
+        });
+
+        cardContainer.setOnDragDetected(event -> {
+            Dragboard db = cardContainer.startDragAndDrop(TransferMode.MOVE);
             ClipboardContent content = new ClipboardContent();
             content.putString(indexColonneSource + ":" + t.getId());
             db.setContent(content);
-            e.consume();
+            event.consume();
         });
 
-        if (t instanceof TacheMere) {
-            cardHeader.setOnDragOver(event -> {
+        TacheAbstraite core = t;
+        while (core instanceof TacheDecorateur) {
+            core = ((TacheDecorateur) core).getTacheDecoree();
+        }
+
+        if (core instanceof TacheMere) {
+            TacheMere mere = (TacheMere) core;
+
+            cardContainer.setOnDragOver(event -> {
                 if (event.getDragboard().hasString()) {
-                    String data = event.getDragboard().getString();
-                    int idSource = Integer.parseInt(data.split(":")[1]);
-                    if (idSource != t.getId()) { // Ne pas se glisser sur soi-même
-                        event.acceptTransferModes(TransferMode.MOVE);
-                    }
+                    int idSource = Integer.parseInt(event.getDragboard().getString().split(":")[1]);
+                    if (idSource != t.getId()) event.acceptTransferModes(TransferMode.MOVE);
                 }
                 event.consume();
             });
 
-            cardHeader.setOnDragDropped(event -> {
+            cardContainer.setOnDragDropped(event -> {
                 Dragboard db = event.getDragboard();
                 if (db.hasString()) {
-                    int idSousTache = Integer.parseInt(db.getString().split(":")[1]);
+                    String[] parts = db.getString().split(":");
+                    int colSourceIdx = Integer.parseInt(parts[0]);
+                    int idFille = Integer.parseInt(parts[1]);
                     try {
-                        TacheDAOImpl dao = new TacheDAOImpl();
-                        dao.addDependanceDAO(idSousTache, t.getId());
-                        t.ajouterDependance(dao.getTacheById(idSousTache));
-                        projet.notifierObservateurs();
-                        event.setDropCompleted(true);
+                        TacheAbstraite fille = null;
+                        Colonne currentCol = projet.getColonnes().get(colSourceIdx);
+                        for(TacheAbstraite task : currentCol.getTaches()) if(task.getId() == idFille) fille = task;
+
+                        if(fille != null && fille != t) {
+                            service.ajouterDependance(projet, mere, fille, currentCol);
+                            event.setDropCompleted(true);
+                        }
                     } catch (Exception ex) { ex.printStackTrace(); }
                 }
                 event.consume();
             });
 
-            // --- AFFICHAGE RÉCURSIF DES ENFANTS ---
             VBox childrenBox = new VBox(5);
-            childrenBox.setPadding(new Insets(0, 0, 0, 15)); // Décalage à droite pour l'effet "englobé"
-            for (TacheAbstraite sousTache : ((TacheMere) t).getSousTaches()) {
-                childrenBox.getChildren().add(createTaskCard(sousTache, indexColonneSource));
+            childrenBox.setPadding(new Insets(5, 0, 0, 15)); // Indentation
+            for (TacheAbstraite sous : mere.getSousTaches()) {
+                childrenBox.getChildren().add(createTaskCard(sous, indexColonneSource));
             }
-            cardContainer.getChildren().addAll(cardHeader, childrenBox);
-        } else {
-            cardContainer.getChildren().add(cardHeader);
+            cardContainer.getChildren().add(childrenBox);
         }
 
         return cardContainer;

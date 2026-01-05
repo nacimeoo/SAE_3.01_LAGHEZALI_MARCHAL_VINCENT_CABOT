@@ -71,6 +71,7 @@ public abstract class TacheDecorateur extends TacheAbstraite{
     public String getEtat() { return tacheDecoree.getEtat(); }
     @Override
     public void setEtat(String etat) { tacheDecoree.setEtat(etat); }
+    public TacheAbstraite getTacheDecoree() { return tacheDecoree; }
 
     @Override
     public String afficherDetails() { return tacheDecoree.afficherDetails();}
