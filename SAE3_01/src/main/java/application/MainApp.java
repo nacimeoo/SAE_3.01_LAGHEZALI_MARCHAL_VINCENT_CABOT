@@ -3,10 +3,12 @@ package application;
 import application.controller.ControleurRetourDashboard;
 import application.vue.VueDashboard;
 import application.vue.VueKanban;
+import application.vue.VueListe;
 import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
 public class MainApp extends Application {
@@ -35,17 +37,72 @@ public class MainApp extends Application {
         Projet projetComplet = projetService.chargerProjetComplet(projetSelectionne.getId());
         if (projetComplet != null) {
             VueKanban kanban = new VueKanban(projetComplet, projetService);
+
             if (kanban.getTop() instanceof HBox) {
                 HBox header = (HBox) kanban.getTop();
+                for (javafx.scene.Node n : header.getChildren()) {
+                    if (n instanceof Button b) {
+                        if ("<- Dashboard".equals(b.getText())) {
+                            b.setOnAction(new ControleurRetourDashboard(this));
+                        }
+                    }
+                }
+            }
+
+            if (kanban.getRight() instanceof VBox) {
+                VBox sideBar = (VBox) kanban.getRight();
+                for (javafx.scene.Node n : sideBar.getChildren()) {
+                    if (n instanceof Button b) {
+                        if ("Vue Liste".equals(b.getText())) {
+                            b.setOnAction(e -> afficherListe(projetComplet));
+                        }
+                    }
+                }
+            }
+            Scene scene = new Scene(kanban, 1000, 600);
+            primaryStage.setScene(scene);
+            primaryStage.setTitle("FRIDAY - " + projetComplet.getNom());
+        }
+    }
+
+    public void afficherListe(Projet projetSelectionne) {
+        Projet projetComplet = projetService.chargerProjetComplet(projetSelectionne.getId());
+        if (projetComplet != null) {
+            VueListe vueListe = new VueListe(projetComplet, projetService);
+
+
+            if (vueListe.getTop() instanceof HBox) {
+                HBox header = (HBox) vueListe.getTop();
                 if (!header.getChildren().isEmpty() && header.getChildren().get(0) instanceof Button) {
                     Button btnBack = (Button) header.getChildren().get(0);
                     btnBack.setOnAction(new ControleurRetourDashboard(this));
                 }
             }
 
-            Scene scene = new Scene(kanban, 1000, 600);
+            if (vueListe.getTop() instanceof HBox) {
+                HBox header = (HBox) vueListe.getTop();
+                for (javafx.scene.Node n : header.getChildren()) {
+                    if (n instanceof Button b) {
+                        if ("<- Dashboard".equals(b.getText())) {
+                            b.setOnAction(new ControleurRetourDashboard(this));
+                        }
+                    }
+                }
+            }
+            if (vueListe.getRight() instanceof VBox) {
+                VBox sideBar = (VBox) vueListe.getRight();
+                for (javafx.scene.Node n : sideBar.getChildren()) {
+                    if (n instanceof Button b) {
+                        if ("Vue Kanban".equals(b.getText())) {
+                            b.setOnAction(e -> afficherKanban(projetComplet));
+                        }
+                    }
+                }
+            }
+
+            Scene scene = new Scene(vueListe, 1000, 600);
             primaryStage.setScene(scene);
-            primaryStage.setTitle("FRIDAY - " + projetComplet.getNom());
+            primaryStage.setTitle("FRIDAY - Liste " + projetComplet.getNom());
         }
     }
 

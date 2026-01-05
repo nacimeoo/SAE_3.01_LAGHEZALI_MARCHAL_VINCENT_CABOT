@@ -19,7 +19,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 
-public class VueKanban extends BorderPane implements Observateur {
+public class VueKanban extends BorderPane implements Observateur, VueProjet {
 
     private Projet projet;
     private ProjetService service;
@@ -48,9 +48,13 @@ public class VueKanban extends BorderPane implements Observateur {
         HBox header = new HBox(20);
         header.setAlignment(Pos.CENTER_LEFT);
         header.setPadding(new Insets(0, 0, 20, 0));
-        Button backButton = new Button("<-");
+
+        Button backButton = new Button("<- Dashboard");
+
+
         Label titreLabel = new Label(projet.getNom());
         titreLabel.setFont(Font.font("Arial", FontWeight.BOLD, 24));
+
         header.getChildren().addAll(backButton, titreLabel);
         this.setTop(header);
 
@@ -69,6 +73,9 @@ public class VueKanban extends BorderPane implements Observateur {
         addTacheBox.setPadding(new Insets(10));
 
         VBox deleteBox = new VBox(10);
+        Button btnListe = new Button("Vue Liste");
+        btnListe.setMaxWidth(Double.MAX_VALUE);
+        btnListe.setStyle("-fx-background-color: #59a7ff; -fx-border-color: #000000;");
 
         Label lblAdd = new Label("Ajouter Tache");
         tfTask = new TextField();
@@ -95,7 +102,7 @@ public class VueKanban extends BorderPane implements Observateur {
         ControleurSupprimerColonne ctrlSupprCol = new ControleurSupprimerColonne(projet, service, this);
         btnDeleteCol.setOnAction(ctrlSupprCol);
 
-        sidebar.getChildren().addAll(addTacheBox, btnDelete, btnDeleteCol);
+        sidebar.getChildren().addAll(addTacheBox, btnDelete, btnDeleteCol, btnListe);
         this.setRight(sidebar);
     }
 

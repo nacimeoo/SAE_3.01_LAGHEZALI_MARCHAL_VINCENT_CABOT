@@ -2,6 +2,7 @@ package application.controller;
 
 import application.*;
 import application.vue.VueKanban;
+import application.vue.VueProjet;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.scene.control.TextField;
@@ -11,10 +12,10 @@ public class ControleurAjouterTache implements EventHandler<ActionEvent> {
 
     private Projet projet;
     private ProjetService service;
-    private VueKanban vue;
+    private VueProjet vue;
     private TextField champSaisie;
 
-    public ControleurAjouterTache(Projet projet, ProjetService service, VueKanban vue, TextField champSaisie) {
+    public ControleurAjouterTache(Projet projet, ProjetService service, VueProjet vue, TextField champSaisie) {
         this.projet = projet;
         this.service = service;
         this.vue = vue;
