@@ -14,27 +14,42 @@ public class TacheDAOImpl implements ITacheDAO {
 
     @Override
     public TacheAbstraite getTacheById(int id) throws Exception {
-        String sql = "SELECT * FROM Tache WHERE id = ?";
-        try (Connection con = DBConnection.getConnection();) {
-            PreparedStatement stmt = con.prepareStatement(sql);
-            stmt.setInt(1, id);
-            ResultSet rs = stmt.executeQuery();
-            if (rs.next()) {
-                if (rs.getInt("type") == 0) {
-                    TacheMere t = new TacheMere(rs.getString("titre"));
-                    t.setId(rs.getInt("id"));
-                    return t;
-                } else {
-                    SousTache t = new SousTache(rs.getString("titre"));
-                    t.setId(rs.getInt("id"));
-                    return t;
+        String sql = "SELECT * FROM tache WHERE id = ?";
+        try (Connection con = DBConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, id);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    int type = rs.getInt("type");
+                    TacheAbstraite tache;
+                    if (type == 0) {
+                        tache = new TacheMere(rs.getString("titre"));
+                        tache.setId(rs.getInt("id"));
+                        chargerSousTaches((TacheMere) tache);
+                    } else {
+                        tache = new SousTache(rs.getString("titre"));
+                        tache.setId(rs.getInt("id"));
+                    }
+                    return tache;
                 }
-
             }
-        } catch (Exception e) {
-            throw new Exception("Erreur lors de la récupération de la tâche avec l'ID: " + id, e);
         }
         return null;
+    }
+
+    public void chargerSousTaches(TacheMere mere) throws Exception {
+        String sql = "SELECT id_sous_tache FROM dependance WHERE id_tache_mere = ?";
+        try (Connection con = DBConnection.getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, mere.getId());
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    TacheAbstraite enfant = getTacheById(rs.getInt("id_sous_tache"));
+                    if (enfant != null) {
+                        mere.ajouterDependance(enfant);
+                    }
+                }
+            }
+        }
     }
 
     @Override

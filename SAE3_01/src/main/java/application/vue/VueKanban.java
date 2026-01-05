@@ -1,10 +1,13 @@
 package application.vue;
 
 import application.Colonne;
+import application.DAO.ITacheDAO;
+import application.DAO.TacheDAOImpl;
 import application.controller.*;
 import application.*;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.SnapshotParameters;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
@@ -190,45 +193,60 @@ public class VueKanban extends BorderPane implements Observateur {
         return col;
     }
 
-    private HBox createTaskCard(TacheAbstraite t, int indexColonneSource) {
-        HBox card = new HBox();
-        card.setPadding(new Insets(15));
-        card.setAlignment(Pos.CENTER_LEFT);
+    private VBox createTaskCard(TacheAbstraite t, int indexColonneSource) {
+        VBox cardContainer = new VBox(5);
 
-        if (t.equals(tacheSelectionnee)) {
-            card.setStyle("-fx-border-color: blue; -fx-border-width: 2; -fx-background-color: #e6f7ff;");
-            vueTacheSelectionnee = card;
-        } else {
-            card.setStyle("-fx-border-color: black; -fx-background-color: white;");
-        }
+        HBox cardHeader = new HBox();
+        cardHeader.setPadding(new Insets(10));
+        cardHeader.setStyle("-fx-border-color: black; -fx-background-color: white;");
+        cardHeader.getChildren().add(new Label(t.getNom()));
 
-        Label lblName = new Label(t.getNom());
-        card.getChildren().add(lblName);
-
-        card.setOnMouseClicked(e -> {
-            e.consume();
-            if (e.getClickCount() == 2) {
-                new ControleurEditerTache(projet, service, t).handle(e);
-            }
-            else {
-                if (vueTacheSelectionnee != null) {
-                    vueTacheSelectionnee.setStyle("-fx-border-color: black; -fx-background-color: white;");
-                }
-                tacheSelectionnee = t;
-                vueTacheSelectionnee = card;
-                card.setStyle("-fx-border-color: blue; -fx-border-width: 2; -fx-background-color: #e6f7ff;");
-            }
-        });
-
-        card.setOnDragDetected(e -> {
-            Dragboard db = card.startDragAndDrop(TransferMode.MOVE);
+        cardHeader.setOnDragDetected(e -> {
+            Dragboard db = cardHeader.startDragAndDrop(TransferMode.MOVE);
             ClipboardContent content = new ClipboardContent();
             content.putString(indexColonneSource + ":" + t.getId());
-            content.putImage(card.snapshot(new SnapshotParameters(), null));
             db.setContent(content);
             e.consume();
         });
 
-        return card;
+        if (t instanceof TacheMere) {
+            cardHeader.setOnDragOver(event -> {
+                if (event.getDragboard().hasString()) {
+                    String data = event.getDragboard().getString();
+                    int idSource = Integer.parseInt(data.split(":")[1]);
+                    if (idSource != t.getId()) { // Ne pas se glisser sur soi-même
+                        event.acceptTransferModes(TransferMode.MOVE);
+                    }
+                }
+                event.consume();
+            });
+
+            cardHeader.setOnDragDropped(event -> {
+                Dragboard db = event.getDragboard();
+                if (db.hasString()) {
+                    int idSousTache = Integer.parseInt(db.getString().split(":")[1]);
+                    try {
+                        TacheDAOImpl dao = new TacheDAOImpl();
+                        dao.addDependanceDAO(idSousTache, t.getId());
+                        t.ajouterDependance(dao.getTacheById(idSousTache));
+                        projet.notifierObservateurs();
+                        event.setDropCompleted(true);
+                    } catch (Exception ex) { ex.printStackTrace(); }
+                }
+                event.consume();
+            });
+
+            // --- AFFICHAGE RÉCURSIF DES ENFANTS ---
+            VBox childrenBox = new VBox(5);
+            childrenBox.setPadding(new Insets(0, 0, 0, 15)); // Décalage à droite pour l'effet "englobé"
+            for (TacheAbstraite sousTache : ((TacheMere) t).getSousTaches()) {
+                childrenBox.getChildren().add(createTaskCard(sousTache, indexColonneSource));
+            }
+            cardContainer.getChildren().addAll(cardHeader, childrenBox);
+        } else {
+            cardContainer.getChildren().add(cardHeader);
+        }
+
+        return cardContainer;
     }
 }
