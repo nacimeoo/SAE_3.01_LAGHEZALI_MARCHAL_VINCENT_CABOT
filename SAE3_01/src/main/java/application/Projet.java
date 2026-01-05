@@ -54,6 +54,24 @@ public class Projet implements Sujet {
         return toutes;
     }
 
+    public List<TacheAbstraite> getAllTaches() {
+        List<TacheAbstraite> toutes = new ArrayList<>();
+        for (Colonne c : colonnes) {
+            toutes.addAll(c.getTaches());
+        }
+        return toutes;
+    }
+
+    public TacheAbstraite getTacheById(String id) {
+        int idTache = Integer.parseInt(id);
+        for (TacheAbstraite t : getAllTaches()) {
+            if (t.getId() == idTache) {
+                return t;
+            }
+        }
+        return null;
+    }
+
     public void afficher(String indent) {
         System.out.println("========================================================");
         System.out.println(" PROJET #" + id + ": " + nom + " : " + dateCreation);
