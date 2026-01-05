@@ -5,7 +5,6 @@ import application.TacheAbstraite;
 import application.TacheMere;
 
 import java.sql.*;
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -60,6 +59,7 @@ public class TacheDAOImpl implements ITacheDAO {
             ps.setInt(1, mere.getId());
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
+                    // Utilisation de getTacheById pour charger récursivement toute l'arborescence
                     TacheAbstraite enfant = getTacheById(rs.getInt("id_sous_tache"));
                     if (enfant != null) {
                         mere.ajouterDependance(enfant);
@@ -78,7 +78,11 @@ public class TacheDAOImpl implements ITacheDAO {
              ResultSet rs = stmt.executeQuery(sql)) {
 
             while (rs.next()) {
-                taches.add(construireTache(rs));
+                TacheAbstraite t = construireTache(rs);
+                if (t instanceof TacheMere) {
+                    chargerSousTaches((TacheMere) t);
+                }
+                taches.add(t);
             }
         }
         return taches;
@@ -87,11 +91,12 @@ public class TacheDAOImpl implements ITacheDAO {
     @Override
     public List<TacheAbstraite> getTachesByColonneId(int colonneId) throws Exception {
         String sql = """
-                SELECT t.*
-                FROM tache t
-                INNER JOIN colonne2tache c2t ON c2t.id_tache = t.id
-                WHERE c2t.id_colonne = ?
-                """;
+            SELECT t.*
+            FROM tache t
+            INNER JOIN colonne2tache c2t ON c2t.id_tache = t.id
+            WHERE c2t.id_colonne = ?
+            AND t.id NOT IN (SELECT id_sous_tache FROM dependance)
+            """;
         List<TacheAbstraite> taches = new ArrayList<>();
         try (Connection con = DBConnection.getConnection();
              PreparedStatement stmt = con.prepareStatement(sql)) {
@@ -99,7 +104,11 @@ public class TacheDAOImpl implements ITacheDAO {
             stmt.setInt(1, colonneId);
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
-                    taches.add(construireTache(rs));
+                    TacheAbstraite t = construireTache(rs);
+                    if (t instanceof TacheMere) {
+                        chargerSousTaches((TacheMere) t);
+                    }
+                    taches.add(t);
                 }
             }
         }
@@ -120,7 +129,7 @@ public class TacheDAOImpl implements ITacheDAO {
             if (exist) {
                 String sqlUpdate = """
                         UPDATE tache
-                        SET titre = ?, type = ?, description = ?, priorite = ?, etat = ?, DateDebut = ?, duree = ?
+                        SET titre = ?, type = ?, description = ?, priorite = ?, etat = ?, DateDebut = ?
                         WHERE id = ?
                         """;
                 try (PreparedStatement psUpdate = con.prepareStatement(sqlUpdate)) {
@@ -134,7 +143,7 @@ public class TacheDAOImpl implements ITacheDAO {
                     } else {
                         psUpdate.setNull(6, Types.DATE);
                     }
-                    psUpdate.setInt(8, tache.getId());
+                    psUpdate.setInt(7, tache.getId());
                     psUpdate.executeUpdate();
                 }
             } else {
@@ -198,7 +207,7 @@ public class TacheDAOImpl implements ITacheDAO {
     public void update_detail(TacheAbstraite tache) throws Exception {
         String sql = """
                 UPDATE tache
-                SET titre = ?, description = ?, priorite = ?, etat = ?, DateDebut = ?, duree = ?
+                SET titre = ?, description = ?, priorite = ?, etat = ?, DateDebut = ?
                 WHERE id = ?
                 """;
         try (Connection con = DBConnection.getConnection();
@@ -212,7 +221,7 @@ public class TacheDAOImpl implements ITacheDAO {
             } else {
                 stmt.setNull(5, Types.DATE);
             }
-            stmt.setInt(7, tache.getId());
+            stmt.setInt(6, tache.getId());
             stmt.executeUpdate();
         }
     }
