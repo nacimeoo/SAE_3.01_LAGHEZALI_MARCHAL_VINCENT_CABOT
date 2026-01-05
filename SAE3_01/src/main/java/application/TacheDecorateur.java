@@ -1,6 +1,6 @@
 package application;
 
-import java.util.Date;
+import java.time.LocalDate;
 
 public abstract class TacheDecorateur extends TacheAbstraite{
 
@@ -53,14 +53,9 @@ public abstract class TacheDecorateur extends TacheAbstraite{
     public void setPriorite(int priorite) { tacheDecoree.setPriorite(priorite); }
 
     @Override
-    public Date getDateDebut() { return tacheDecoree.getDateDebut(); }
+    public LocalDate getDateDebut() { return tacheDecoree.getDateDebut(); }
     @Override
-    public void setDateDebut(Date dateDebut) { tacheDecoree.setDateDebut(dateDebut); }
-
-    @Override
-    public Date getDateFin() { return tacheDecoree.getDateFin(); }
-    @Override
-    public void setDateFin(Date dateFin) { tacheDecoree.setDateFin(dateFin); }
+    public void setDateDebut(LocalDate dateDebut) { tacheDecoree.setDateDebut(dateDebut); }
 
     @Override
     public int getDureeEstimee() { return tacheDecoree.getDureeEstimee(); }
