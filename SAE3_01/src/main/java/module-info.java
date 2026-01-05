@@ -8,6 +8,7 @@ module application {
     requires mysql.connector.j;
     requires com.zaxxer.hikari;
     requires java.sql;
+    requires java.desktop;
 
 
     opens application to javafx.fxml;
