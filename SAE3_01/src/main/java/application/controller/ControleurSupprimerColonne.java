@@ -4,6 +4,7 @@ import application.Colonne;
 import application.Projet;
 import application.ProjetService;
 import application.vue.VueKanban;
+import application.vue.VueProjet;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 
@@ -11,9 +12,9 @@ public class ControleurSupprimerColonne implements EventHandler<ActionEvent> {
 
     private Projet projet;
     private ProjetService service;
-    private VueKanban vue;
+    private VueProjet vue;
 
-    public ControleurSupprimerColonne(Projet projet, ProjetService service, VueKanban vue) {
+    public ControleurSupprimerColonne(Projet projet, ProjetService service, VueProjet vue) {
         this.projet = projet;
         this.service = service;
         this.vue = vue;
