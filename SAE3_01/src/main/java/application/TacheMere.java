@@ -49,4 +49,8 @@ public class TacheMere extends TacheAbstraite {
 
         return sb.toString();
     }
+
+    public ArrayList<TacheAbstraite> getSousTaches() {
+        return this.dependance;
+    }
 }
