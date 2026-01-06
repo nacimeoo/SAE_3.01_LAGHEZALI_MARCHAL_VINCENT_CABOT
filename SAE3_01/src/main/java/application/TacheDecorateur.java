@@ -74,5 +74,9 @@ public abstract class TacheDecorateur extends TacheAbstraite{
 
     @Override
     public String afficherDetails() { return tacheDecoree.afficherDetails();}
+
+    public TacheAbstraite getTacheDecoree() {
+        return tacheDecoree;
+    }
 }
 
