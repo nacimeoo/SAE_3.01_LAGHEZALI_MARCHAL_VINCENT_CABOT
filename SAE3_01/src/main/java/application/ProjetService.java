@@ -169,11 +169,14 @@ public class ProjetService {
         projet.notifierObservateurs();
     }
 
-    public boolean ajouterDependance(Projet projet, TacheMere mere, TacheAbstraite fille, Colonne col) throws Exception {
+    public boolean ajouterDependance(Projet projet, TacheMere mere, TacheAbstraite fille, Colonne col, Colonne colCible) throws Exception {
         if (mere == null || fille == null) return false;
         tacheDAO.addDependanceDAO(fille.getId(), mere.getId());
         mere.ajouterDependance(fille);
         col.getTaches().remove(fille);
+        if (col != null && colCible != null && col.getId() != colCible.getId()) {
+            colonneDAO.deplacerTacheDAO(colCible.getId(), fille.getId());
+        }
 
         projet.notifierObservateurs();
         return true;
