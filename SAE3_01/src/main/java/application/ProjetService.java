@@ -66,26 +66,33 @@ public class ProjetService {
     public void supprimerTache(Projet projet, Colonne colonne, TacheAbstraite tache) throws Exception {
         if (colonne == null || tache == null) return;
 
-
         tacheDAO.delete(tache.getId());
 
+        nettoyerTacheDeSaStructure(projet, tache);
 
-        colonne.supprimerTache(tache);
         projet.notifierObservateurs();
-
     }
 
     public void deplacerTache(Projet projet, Colonne src, Colonne dest, TacheAbstraite tache) throws Exception {
         if (src == null || dest == null || tache == null) return;
-
-
-        colonneDAO.deplacerTacheDAO( dest.getId(), tache.getId());
-
-
+        updateColonneEnBaseRecursif(tache, dest.getId());
         src.supprimerTache(tache);
         dest.ajouterTache(tache);
         projet.notifierObservateurs();
+    }
 
+    private void updateColonneEnBaseRecursif(TacheAbstraite t, int nouveauIdColonne) throws Exception {
+        colonneDAO.deplacerTacheDAO(nouveauIdColonne, t.getId());
+        TacheAbstraite core = t;
+        while (core instanceof TacheDecorateur) {
+            core = ((TacheDecorateur) core).getTacheDecoree();
+        }
+        if (core instanceof TacheMere) {
+            TacheMere mere = (TacheMere) core;
+            for (TacheAbstraite sousTache : mere.getSousTaches()) {
+                updateColonneEnBaseRecursif(sousTache, nouveauIdColonne);
+            }
+        }
     }
 
     public boolean ajouterDependance(Projet projet,TacheMere mere, TacheAbstraite fille) throws Exception {
@@ -190,13 +197,19 @@ public class ProjetService {
         if (projet == null || tache == null) return;
         tacheDAO.detacherSousTache(tache.getId(), col.getId());
         TacheMere parent = trouverParent(projet, tache);
-        if (parent != null) {
-            parent.supprimerDependance(tache);
-        }
-        if (!col.getTaches().contains(tache)) {
-            col.ajouterTache(tache);
-        }
+        nettoyerTacheDeSaStructure(projet, tache);
+        col.ajouterTache(tache);
         projet.notifierObservateurs();
+    }
+
+    private void nettoyerTacheDeSaStructure(Projet projet, TacheAbstraite tache) {
+        for (Colonne c : projet.getColonnes()) {
+            c.getTaches().removeIf(t -> t.getId() == tache.getId());
+        }
+        TacheMere parent = trouverParent(projet, tache);
+        if (parent != null) {
+            parent.getSousTaches().removeIf(t -> t.getId() == tache.getId());
+        }
     }
 
     private TacheMere trouverParent(Projet projet, TacheAbstraite fille) {
@@ -216,7 +229,7 @@ public class ProjetService {
         }
         if (core instanceof TacheMere) {
             TacheMere mere = (TacheMere) core;
-            if (mere.getSousTaches().contains(cible)) {
+            if (mere.getSousTaches().stream().anyMatch(t -> t.getId() == cible.getId())) {
                 return mere;
             }
             for (TacheAbstraite sous : mere.getSousTaches()) {
