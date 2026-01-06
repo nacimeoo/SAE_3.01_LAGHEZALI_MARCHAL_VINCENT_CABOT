@@ -4,11 +4,15 @@ import application.Etiquette;
 import application.TacheAbstraite;
 import application.TacheDecorateur;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.paint.Color;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class VueDescriptionTache extends Dialog<TacheAbstraite> {
 
@@ -52,7 +56,7 @@ public class VueDescriptionTache extends Dialog<TacheAbstraite> {
         btnAddEtiquette.setOnAction(e -> {
             String nomEtiquette = tfEtiquetteNom.getText();
             if (!nomEtiquette.isEmpty()) {
-                String webColor = toHexString(colorPicker.getValue());
+                String webColor = colorPicker.getValue().toString().replace("0x", "#");
                 this.tacheEnCoursEdition = new Etiquette(this.tacheEnCoursEdition, nomEtiquette, webColor);
 
                 updateAffichageEtiquettes(zoneEtiquettes);
@@ -93,18 +97,56 @@ public class VueDescriptionTache extends Dialog<TacheAbstraite> {
         while (current instanceof TacheDecorateur) {
             if (current instanceof Etiquette) {
                 Etiquette et = (Etiquette) current;
-                Label tag = new Label(et.getLibelle());
-                tag.setStyle("-fx-background-color: " + et.getCouleur().replace("0x", "#") + "; -fx-text-fill: white; -fx-padding: 3; -fx-background-radius: 3;");
-                pane.getChildren().add(tag);
+
+                HBox tagBox = new HBox(5);
+                tagBox.setAlignment(Pos.CENTER_LEFT);
+                tagBox.setStyle("-fx-background-color: " + et.getCouleur() + "; -fx-background-radius: 15; -fx-padding: 3 8;");
+
+                Label lblNom = new Label(et.getLibelle());
+                lblNom.setStyle("-fx-text-fill: white; -fx-font-weight: bold;");
+
+                Button btnSuppr = new Button("X");
+
+                btnSuppr.setOnAction(e -> {
+                    supprimerEtiquette(et, pane);
+                });
+
+                tagBox.getChildren().addAll(lblNom, btnSuppr);
+
+                pane.getChildren().add(tagBox);
             }
             current = ((TacheDecorateur) current).getTacheDecoree();
         }
     }
 
-    private String toHexString(Color c) {
-        return String.format( "#%02X%02X%02X",
-                (int)( c.getRed() * 255 ),
-                (int)( c.getGreen() * 255 ),
-                (int)( c.getBlue() * 255 ) );
+    private void supprimerEtiquette(Etiquette etiquetteASupprimer, FlowPane pane) {
+        TacheAbstraite t = tacheEnCoursEdition;
+        while (t instanceof TacheDecorateur) {
+            t = ((TacheDecorateur) t).getTacheDecoree();
+        }
+
+        List<Etiquette> aGarder = new ArrayList<>();
+        TacheAbstraite current = tacheEnCoursEdition;
+        while (current instanceof TacheDecorateur) {
+            if (current instanceof Etiquette) {
+                Etiquette e = (Etiquette) current;
+                if (e != etiquetteASupprimer) {
+                    aGarder.add(e);
+                }
+            }
+            current = ((TacheDecorateur) current).getTacheDecoree();
+        }
+
+        this.tacheEnCoursEdition = t;
+
+        for (Etiquette info : aGarder) {
+            Etiquette nouvelleCouche = new Etiquette(this.tacheEnCoursEdition, info.getLibelle(), info.getCouleur());
+            nouvelleCouche.setId(info.getId());
+
+            this.tacheEnCoursEdition = nouvelleCouche;
+        }
+        updateAffichageEtiquettes(pane);
     }
+
+
 }
