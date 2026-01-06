@@ -13,7 +13,6 @@ public abstract class TacheAbstraite{
     protected String description;
     protected int priorite;
     protected LocalDate dateDebut;
-    protected LocalDate dateFin;
     protected int dureeEstimee;
     protected String etat;
 
@@ -66,13 +65,6 @@ public abstract class TacheAbstraite{
         this.dateDebut = dateDebut;
     }
 
-    public LocalDate getDateFin() {
-        return dateFin;
-    }
-
-    public void setDateFin(LocalDate dateFin) {
-        this.dateFin = dateFin;
-    }
 
     public int getDureeEstimee() {
         return dureeEstimee;

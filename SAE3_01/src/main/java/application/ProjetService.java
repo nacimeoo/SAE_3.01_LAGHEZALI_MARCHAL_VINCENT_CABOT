@@ -169,6 +169,16 @@ public class ProjetService {
         projet.notifierObservateurs();
     }
 
+    public boolean ajouterDependance(Projet projet, TacheMere mere, TacheAbstraite fille, Colonne col) throws Exception {
+        if (mere == null || fille == null) return false;
+        tacheDAO.addDependanceDAO(fille.getId(), mere.getId());
+        mere.ajouterDependance(fille);
+        col.getTaches().remove(fille);
+
+        projet.notifierObservateurs();
+        return true;
+    }
+
     public Projet chargerProjetComplet(int idProjet) {
         try {
             Projet p = projetDAO.getProjetById(idProjet);
@@ -193,5 +203,7 @@ public class ProjetService {
             return null;
         }
     }
+
+
 
 }

@@ -1,10 +1,13 @@
 package application.vue;
 
 import application.Colonne;
+import application.DAO.ITacheDAO;
+import application.DAO.TacheDAOImpl;
 import application.controller.*;
 import application.*;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.SnapshotParameters;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
@@ -16,7 +19,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 
-public class VueKanban extends BorderPane implements Observateur {
+public class VueKanban extends BorderPane implements Observateur, VueProjet {
 
     private Projet projet;
     private ProjetService service;
@@ -26,7 +29,7 @@ public class VueKanban extends BorderPane implements Observateur {
     private TextField tfTask;
 
     private TacheAbstraite tacheSelectionnee = null;
-    private HBox vueTacheSelectionnee = null;
+    private VBox vueTacheSelectionnee = null;
     private Colonne colonneSelectionnee = null;
     private VBox vueColonneSelectionnee = null;
 
@@ -45,9 +48,13 @@ public class VueKanban extends BorderPane implements Observateur {
         HBox header = new HBox(20);
         header.setAlignment(Pos.CENTER_LEFT);
         header.setPadding(new Insets(0, 0, 20, 0));
-        Button backButton = new Button("<-");
+
+        Button backButton = new Button("<- Dashboard");
+
+
         Label titreLabel = new Label(projet.getNom());
         titreLabel.setFont(Font.font("Arial", FontWeight.BOLD, 24));
+
         header.getChildren().addAll(backButton, titreLabel);
         this.setTop(header);
 
@@ -66,6 +73,9 @@ public class VueKanban extends BorderPane implements Observateur {
         addTacheBox.setPadding(new Insets(10));
 
         VBox deleteBox = new VBox(10);
+        Button btnListe = new Button("Vue Liste");
+        btnListe.setMaxWidth(Double.MAX_VALUE);
+        btnListe.setStyle("-fx-background-color: #59a7ff; -fx-border-color: #000000;");
 
         Label lblAdd = new Label("Ajouter Tache");
         tfTask = new TextField();
@@ -92,7 +102,7 @@ public class VueKanban extends BorderPane implements Observateur {
         ControleurSupprimerColonne ctrlSupprCol = new ControleurSupprimerColonne(projet, service, this);
         btnDeleteCol.setOnAction(ctrlSupprCol);
 
-        sidebar.getChildren().addAll(addTacheBox, btnDelete, btnDeleteCol);
+        sidebar.getChildren().addAll(addTacheBox, btnDelete, btnDeleteCol, btnListe);
         this.setRight(sidebar);
     }
 
@@ -190,66 +200,130 @@ public class VueKanban extends BorderPane implements Observateur {
         return col;
     }
 
-    private HBox createTaskCard(TacheAbstraite t, int indexColonneSource) {
-        HBox card = new HBox();
-        card.setSpacing(5);
-        card.setPadding(new Insets(15));
-        card.setAlignment(Pos.CENTER_LEFT);
+    private VBox createTaskCard(TacheAbstraite t, int indexColonneSource) {
+        // 1. Structure Principale (Vient du Remote pour supporter les sous-tâches)
+        VBox cardContainer = new VBox(5);
+        cardContainer.setPadding(new Insets(10));
+        cardContainer.setStyle("-fx-border-color: black; -fx-background-color: white; -fx-background-radius: 5; -fx-border-radius: 5;");
 
-        if (t.equals(tacheSelectionnee)) {
-            card.setStyle("-fx-border-color: blue; -fx-border-width: 2; -fx-background-color: #e6f7ff;");
-            vueTacheSelectionnee = card;
-        } else {
-            card.setStyle("-fx-border-color: black; -fx-background-color: white;");
-        }
+        // 2. En-tête de la carte (Nom + Étiquettes)
+        HBox cardHeader = new HBox(10);
+        cardHeader.setAlignment(Pos.CENTER_LEFT);
 
-        Label lblName = new Label(t.getNom());
-        card.getChildren().add(lblName);
+        Label lblNom = new Label(t.getNom());
+        lblNom.setFont(Font.font("Arial", FontWeight.BOLD, 13));
+        cardHeader.getChildren().add(lblNom);
 
+        // 3. Boucle d'affichage des étiquettes (Fusion : Structure Remote + Logique couleur HEAD)
         TacheAbstraite current = t;
         while (current instanceof TacheDecorateur) {
             if (current instanceof Etiquette) {
                 Etiquette et = (Etiquette) current;
 
                 Label lblEtiquette = new Label(et.getLibelle());
-                String hexColor = et.getCouleur().replace("0x", "#");
+
+                // Récupération de la couleur (Vient du HEAD)
+                String hexColor = et.getCouleur().startsWith("0x") ? et.getCouleur().replace("0x", "#") : et.getCouleur();
+
+                // Style combiné (Vient du HEAD pour la couleur, ajusté pour la taille)
                 lblEtiquette.setStyle(
                         "-fx-background-color: " + hexColor + ";" +
                                 "-fx-text-fill: white;" +
                                 "-fx-padding: 2 5;" +
-                                "-fx-background-radius: 5;" +
+                                "-fx-background-radius: 3;" + // Légèrement ajusté pour correspondre au nouveau look
                                 "-fx-font-size: 10px;" +
                                 "-fx-font-weight: bold;"
                 );
-                card.getChildren().add(lblEtiquette);
+
+                // On ajoute au HEADER (et non à cardContainer directement) pour qu'elles soient à côté du nom
+                cardHeader.getChildren().add(lblEtiquette);
             }
             current = ((TacheDecorateur) current).getTacheDecoree();
         }
 
-        card.setOnMouseClicked(e -> {
+        cardContainer.getChildren().add(cardHeader);
+
+        // 4. Gestion du Clic (Vient du Remote, adapté au container VBox)
+        cardContainer.setOnMouseClicked(e -> {
             e.consume();
+
             if (e.getClickCount() == 2) {
                 new ControleurEditerTache(projet, service, t).handle(e);
-            }
-            else {
+            } else {
                 if (vueTacheSelectionnee != null) {
-                    vueTacheSelectionnee.setStyle("-fx-border-color: black; -fx-background-color: white;");
+                    // Cast en Region pour être sûr de pouvoir appliquer le style
+                    ((Region)vueTacheSelectionnee).setStyle("-fx-border-color: black; -fx-background-color: white; -fx-background-radius: 5; -fx-border-radius: 5;");
                 }
                 tacheSelectionnee = t;
-                vueTacheSelectionnee = card;
-                card.setStyle("-fx-border-color: blue; -fx-border-width: 2; -fx-background-color: #e6f7ff;");
+                vueTacheSelectionnee = cardContainer;
+                cardContainer.setStyle("-fx-border-color: blue; -fx-border-width: 2; -fx-background-color: #e6f7ff; -fx-background-radius: 5; -fx-border-radius: 5;");
             }
         });
 
-        card.setOnDragDetected(e -> {
-            Dragboard db = card.startDragAndDrop(TransferMode.MOVE);
+        // 5. Drag & Drop de base (Déplacement)
+        cardContainer.setOnDragDetected(event -> {
+            Dragboard db = cardContainer.startDragAndDrop(TransferMode.MOVE);
             ClipboardContent content = new ClipboardContent();
             content.putString(indexColonneSource + ":" + t.getId());
-            content.putImage(card.snapshot(new SnapshotParameters(), null));
             db.setContent(content);
-            e.consume();
+            event.consume();
         });
 
-        return card;
+        // 6. Gestion des Tâches Mères / Sous-tâches (Vient du Remote - "Les nouveaux trucs")
+        TacheAbstraite core = t;
+        while (core instanceof TacheDecorateur) {
+            core = ((TacheDecorateur) core).getTacheDecoree();
+        }
+
+        if (core instanceof TacheMere) {
+            TacheMere mere = (TacheMere) core;
+
+            // Drag over pour accepter les dépendances
+            cardContainer.setOnDragOver(event -> {
+                if (event.getDragboard().hasString()) {
+                    try {
+                        String data = event.getDragboard().getString();
+                        if (data.contains(":")) {
+                            int idSource = Integer.parseInt(data.split(":")[1]);
+                            if (idSource != t.getId()) event.acceptTransferModes(TransferMode.MOVE);
+                        }
+                    } catch (Exception e) { /* Ignorer les erreurs de parsing pendant le drag */ }
+                }
+                event.consume();
+            });
+
+            // Drop pour créer la dépendance/sous-tâche
+            cardContainer.setOnDragDropped(event -> {
+                Dragboard db = event.getDragboard();
+                if (db.hasString()) {
+                    String[] parts = db.getString().split(":");
+                    int colSourceIdx = Integer.parseInt(parts[0]);
+                    int idFille = Integer.parseInt(parts[1]);
+                    try {
+                        TacheAbstraite fille = null;
+                        Colonne currentCol = projet.getColonnes().get(colSourceIdx);
+                        for(TacheAbstraite task : currentCol.getTaches()) if(task.getId() == idFille) fille = task;
+
+                        if(fille != null && fille != t) {
+                            service.ajouterDependance(projet, mere, fille, currentCol);
+                            event.setDropCompleted(true);
+                        }
+                    } catch (Exception ex) { ex.printStackTrace(); }
+                }
+                event.consume();
+            });
+
+            // Affichage récursif des enfants
+            VBox childrenBox = new VBox(5);
+            childrenBox.setPadding(new Insets(5, 0, 0, 15)); // Indentation
+            for (TacheAbstraite sous : mere.getSousTaches()) {
+                childrenBox.getChildren().add(createTaskCard(sous, indexColonneSource));
+            }
+            cardContainer.getChildren().add(childrenBox);
+        }
+
+        return cardContainer;
     }
+
+
 }

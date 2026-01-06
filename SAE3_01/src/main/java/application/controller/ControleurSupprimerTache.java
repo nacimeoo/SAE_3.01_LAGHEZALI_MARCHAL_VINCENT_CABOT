@@ -5,6 +5,7 @@ import application.Projet;
 import application.ProjetService;
 import application.TacheAbstraite;
 import application.vue.VueKanban;
+import application.vue.VueProjet;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.scene.control.Alert;
@@ -13,9 +14,9 @@ public class ControleurSupprimerTache implements EventHandler<ActionEvent> {
 
     private Projet projet;
     private ProjetService service;
-    private VueKanban vue;
+    private VueProjet vue;
 
-    public ControleurSupprimerTache(Projet projet, ProjetService service, VueKanban vue) {
+    public ControleurSupprimerTache(Projet projet, ProjetService service, VueProjet vue) {
         this.projet = projet;
         this.service = service;
         this.vue = vue;
