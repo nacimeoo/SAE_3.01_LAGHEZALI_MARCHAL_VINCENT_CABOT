@@ -156,4 +156,15 @@ public class EtiquetteDAOImpl implements IEtiquetteDAO {
             throw new Exception("Erreur lors de la connexion", e);
         }
     }
+
+    public void supprimerLiensEtiquettes(int idTache) throws Exception {
+        String sql = "DELETE FROM tache2etiquette WHERE id_tache = ?";
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement stmt = connection.prepareStatement(sql)) {
+            stmt.setInt(1, idTache);
+            stmt.executeUpdate();
+        } catch (Exception e) {
+            throw new Exception("Erreur lors de la suppression des liens étiquettes pour la tâche " + idTache, e);
+        }
+    }
 }
