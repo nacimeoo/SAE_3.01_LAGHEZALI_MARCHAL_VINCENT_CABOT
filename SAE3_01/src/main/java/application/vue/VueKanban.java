@@ -268,6 +268,7 @@ public class VueKanban extends BorderPane implements Observateur, VueProjet {
         cardContainer.setStyle("-fx-border-color: black; -fx-background-color: white; -fx-background-radius: 5; -fx-border-radius: 5;");
 
         VBox cardHeader = new VBox(10);
+
         cardHeader.setAlignment(Pos.CENTER_LEFT);
 
         Label lblNom = new Label(t.getNom());
@@ -338,7 +339,7 @@ public class VueKanban extends BorderPane implements Observateur, VueProjet {
                             int idSource = Integer.parseInt(data.split(":")[1]);
                             if (idSource != t.getId()) event.acceptTransferModes(TransferMode.MOVE);
                         }
-                    } catch (Exception e) { /* Ignorer les erreurs de parsing pendant le drag */ }
+                    } catch (Exception e) { }
                 }
                 event.consume();
             });
@@ -352,10 +353,11 @@ public class VueKanban extends BorderPane implements Observateur, VueProjet {
                     try {
                         TacheAbstraite fille = null;
                         Colonne currentCol = projet.getColonnes().get(colSourceIdx);
+                        Colonne colCible = projet.getColonnes().get(indexColonneSource);
                         for(TacheAbstraite task : currentCol.getTaches()) if(task.getId() == idFille) fille = task;
 
                         if(fille != null && fille != t) {
-                            service.ajouterDependance(projet, mere, fille, currentCol);
+                            service.ajouterDependance(projet, mere, fille, currentCol, colCible);
                             event.setDropCompleted(true);
                         }
                     } catch (Exception ex) { ex.printStackTrace(); }
