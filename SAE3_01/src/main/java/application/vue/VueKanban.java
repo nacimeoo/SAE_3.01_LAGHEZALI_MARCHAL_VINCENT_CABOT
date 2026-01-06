@@ -192,6 +192,7 @@ public class VueKanban extends BorderPane implements Observateur {
 
     private HBox createTaskCard(TacheAbstraite t, int indexColonneSource) {
         HBox card = new HBox();
+        card.setSpacing(5);
         card.setPadding(new Insets(15));
         card.setAlignment(Pos.CENTER_LEFT);
 
@@ -204,6 +205,26 @@ public class VueKanban extends BorderPane implements Observateur {
 
         Label lblName = new Label(t.getNom());
         card.getChildren().add(lblName);
+
+        TacheAbstraite current = t;
+        while (current instanceof TacheDecorateur) {
+            if (current instanceof Etiquette) {
+                Etiquette et = (Etiquette) current;
+
+                Label lblEtiquette = new Label(et.getLibelle());
+                String hexColor = et.getCouleur().replace("0x", "#");
+                lblEtiquette.setStyle(
+                        "-fx-background-color: " + hexColor + ";" +
+                                "-fx-text-fill: white;" +
+                                "-fx-padding: 2 5;" +
+                                "-fx-background-radius: 5;" +
+                                "-fx-font-size: 10px;" +
+                                "-fx-font-weight: bold;"
+                );
+                card.getChildren().add(lblEtiquette);
+            }
+            current = ((TacheDecorateur) current).getTacheDecoree();
+        }
 
         card.setOnMouseClicked(e -> {
             e.consume();
