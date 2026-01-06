@@ -14,6 +14,7 @@ public class ProjetService {
     private TacheDAOImpl tacheDAO = new TacheDAOImpl();
     private EtiquetteDAOImpl etiquetteDAO = new EtiquetteDAOImpl();
 
+
     public Projet creerProjet(String nom, Date dateCreation) throws Exception {
         Projet projet = new Projet(nom, dateCreation);
         projetDAO.save(projet);
@@ -123,9 +124,48 @@ public class ProjetService {
 
     }
 
-    public void modifierTache(Projet projet, TacheAbstraite tache) throws Exception {
-        if (projet == null || tache == null) return;
-        tacheDAO.update_detail(tache);
+
+    public void modifierTache(Projet projet, TacheAbstraite tacheModifiee) throws Exception {
+        if (projet == null || tacheModifiee == null) return;
+
+        TacheAbstraite tacheRacine = tacheModifiee;
+        while (tacheRacine instanceof TacheDecorateur) {
+            tacheRacine = ((TacheDecorateur) tacheRacine).getTacheDecoree();
+        }
+
+        tacheDAO.update_detail(tacheRacine);
+
+        TacheAbstraite courant = tacheModifiee;
+        while (courant instanceof TacheDecorateur) {
+            if (courant instanceof Etiquette) {
+                Etiquette et = (Etiquette) courant;
+                if (et.getId() == 0) {
+                    etiquetteDAO.save(et);
+                    etiquetteDAO.attachEtiquetteToTache(et.getId(), tacheRacine.getId());
+                }
+            }
+            courant = ((TacheDecorateur) courant).getTacheDecoree();
+        }
+
+        boolean remplace = false;
+        for (Colonne col : projet.getColonnes()) {
+            List<TacheAbstraite> taches = col.getTaches();
+            for (int i = 0; i < taches.size(); i++) {
+                TacheAbstraite t = taches.get(i);
+
+                TacheAbstraite tRacineDansListe = t;
+                while (tRacineDansListe instanceof TacheDecorateur) {
+                    tRacineDansListe = ((TacheDecorateur) tRacineDansListe).getTacheDecoree();
+                }
+
+                if (tRacineDansListe.getId() == tacheRacine.getId()) {
+                    taches.set(i, tacheModifiee);
+                    remplace = true;
+                    break;
+                }
+            }
+            if (remplace) break;
+        }
         projet.notifierObservateurs();
     }
 
