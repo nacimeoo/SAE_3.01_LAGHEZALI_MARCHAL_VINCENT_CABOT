@@ -238,18 +238,24 @@ public class TacheDAOImpl implements ITacheDAO {
 
     public void detacherSousTache(int idTache, int idColonne) throws Exception {
         String sqlDeleteDep = "DELETE FROM dependance WHERE id_sous_tache = ?";
-        String sqlInsertCol = "INSERT INTO colonne2tache (id_colonne, id_tache) VALUES (?, ?) " +
-                "ON DUPLICATE KEY UPDATE id_colonne = id_colonne";
+        String sqlDeleteCol = "DELETE FROM colonne2tache WHERE id_tache = ?";
+        String sqlInsertCol = "INSERT INTO colonne2tache (id_colonne, id_tache) VALUES (?, ?)";
 
         try (Connection con = DBConnection.getConnection()) {
             con.setAutoCommit(false);
-            try (PreparedStatement ps1 = con.prepareStatement(sqlDeleteDep);
-                 PreparedStatement ps2 = con.prepareStatement(sqlInsertCol)) {
-                ps1.setInt(1, idTache);
-                ps1.executeUpdate();
-                ps2.setInt(1, idColonne);
-                ps2.setInt(2, idTache);
-                ps2.executeUpdate();
+            try (PreparedStatement psDep = con.prepareStatement(sqlDeleteDep);
+                 PreparedStatement psDelCol = con.prepareStatement(sqlDeleteCol);
+                 PreparedStatement psInsCol = con.prepareStatement(sqlInsertCol)) {
+
+                psDep.setInt(1, idTache);
+                psDep.executeUpdate();
+
+                psDelCol.setInt(1, idTache);
+                psDelCol.executeUpdate();
+
+                psInsCol.setInt(1, idColonne);
+                psInsCol.setInt(2, idTache);
+                psInsCol.executeUpdate();
 
                 con.commit();
             } catch (Exception e) {

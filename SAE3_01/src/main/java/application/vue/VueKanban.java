@@ -196,26 +196,24 @@ public class VueKanban extends BorderPane implements Observateur, VueProjet {
             if (db.hasString()) {
                 try {
                     String[] parts = db.getString().split(":");
-                    int indexColonneSource = Integer.parseInt(parts[0]);
+                    int indexColSource = Integer.parseInt(parts[0]);
                     int idTache = Integer.parseInt(parts[1]);
 
+                    TacheAbstraite task = trouverTacheParId(idTache);
 
-                    TacheAbstraite tacheConcernee = trouverTacheParId(idTache);
+                    if (task != null) {
+                        Colonne colSource = projet.getColonnes().get(indexColSource);
+                        boolean estRacine = colSource.getTaches().stream()
+                                .anyMatch(t -> t.getId() == idTache);
 
-                    if (tacheConcernee != null) {
-                        if (indexColonneSource != indexColonne) {
-                            Colonne colSource = projet.getColonnes().get(indexColonneSource);
-                            service.deplacerTache(projet, colSource, c, tacheConcernee);
-                            success = true;
-                        }
-                        else {
-                            boolean estRacine = c.getTaches().stream()
-                                    .anyMatch(t -> t.getId() == idTache);
-
-                            if (!estRacine) {
-                                service.detacherSousTache(projet, tacheConcernee, c);
+                        if (estRacine) {
+                            if (indexColSource != indexColonne) {
+                                service.deplacerTache(projet, colSource, c, task);
                                 success = true;
                             }
+                        } else {
+                            service.detacherSousTache(projet, task, c);
+                            success = true;
                         }
                     }
                 } catch (Exception ex) {
