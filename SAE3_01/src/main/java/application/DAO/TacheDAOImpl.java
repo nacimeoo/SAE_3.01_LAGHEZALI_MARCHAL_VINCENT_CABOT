@@ -59,7 +59,6 @@ public class TacheDAOImpl implements ITacheDAO {
             ps.setInt(1, mere.getId());
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    // Utilisation de getTacheById pour charger récursivement toute l'arborescence
                     TacheAbstraite enfant = getTacheById(rs.getInt("id_sous_tache"));
                     if (enfant != null) {
                         mere.ajouterDependance(enfant);
@@ -223,6 +222,29 @@ public class TacheDAOImpl implements ITacheDAO {
             }
             stmt.setInt(6, tache.getId());
             stmt.executeUpdate();
+        }
+    }
+
+    public void detacherSousTache(int idTache, int idColonne) throws Exception {
+        String sqlDeleteDep = "DELETE FROM dependance WHERE id_sous_tache = ?";
+        String sqlInsertCol = "INSERT INTO colonne2tache (id_colonne, id_tache) VALUES (?, ?) " +
+                "ON DUPLICATE KEY UPDATE id_colonne = id_colonne";
+
+        try (Connection con = DBConnection.getConnection()) {
+            con.setAutoCommit(false);
+            try (PreparedStatement ps1 = con.prepareStatement(sqlDeleteDep);
+                 PreparedStatement ps2 = con.prepareStatement(sqlInsertCol)) {
+                ps1.setInt(1, idTache);
+                ps1.executeUpdate();
+                ps2.setInt(1, idColonne);
+                ps2.setInt(2, idTache);
+                ps2.executeUpdate();
+
+                con.commit();
+            } catch (Exception e) {
+                con.rollback();
+                throw e;
+            }
         }
     }
 }

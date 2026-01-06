@@ -189,8 +189,42 @@ public class VueKanban extends BorderPane implements Observateur, VueProjet {
             event.consume();
         });
 
-        ControleurDeplacerTache ctrlDrop = new ControleurDeplacerTache(projet, service, indexColonne);
-        col.setOnDragDropped(ctrlDrop);
+        col.setOnDragDropped(event -> {
+            Dragboard db = event.getDragboard();
+            boolean success = false;
+
+            if (db.hasString()) {
+                try {
+                    String[] parts = db.getString().split(":");
+                    int indexColonneSource = Integer.parseInt(parts[0]);
+                    int idTache = Integer.parseInt(parts[1]);
+
+
+                    TacheAbstraite tacheConcernee = trouverTacheParId(idTache);
+
+                    if (tacheConcernee != null) {
+                        if (indexColonneSource != indexColonne) {
+                            Colonne colSource = projet.getColonnes().get(indexColonneSource);
+                            service.deplacerTache(projet, colSource, c, tacheConcernee);
+                            success = true;
+                        }
+                        else {
+                            boolean estRacine = c.getTaches().stream()
+                                    .anyMatch(t -> t.getId() == idTache);
+
+                            if (!estRacine) {
+                                service.detacherSousTache(projet, tacheConcernee, c);
+                                success = true;
+                            }
+                        }
+                    }
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+            }
+            event.setDropCompleted(success);
+            event.consume();
+        });
 
         col.getChildren().add(new Label(c.getNom()));
 
@@ -198,6 +232,34 @@ public class VueKanban extends BorderPane implements Observateur, VueProjet {
             col.getChildren().add(createTaskCard(t, indexColonne));
         }
         return col;
+    }
+
+    private TacheAbstraite trouverTacheParId(int id) {
+        for (Colonne c : projet.getColonnes()) {
+            for (TacheAbstraite t : c.getTaches()) {
+                TacheAbstraite resultat = chercherRecursif(t, id);
+                if (resultat != null) return resultat;
+            }
+        }
+        return null;
+    }
+
+    private TacheAbstraite chercherRecursif(TacheAbstraite t, int id) {
+        TacheAbstraite core = t;
+        while (core instanceof TacheDecorateur) {
+            if (core.getId() == id) return t;
+            core = ((TacheDecorateur) core).getTacheDecoree();
+        }
+
+        if (core.getId() == id) return t;
+
+        if (core instanceof TacheMere) {
+            for (TacheAbstraite sous : ((TacheMere) core).getSousTaches()) {
+                TacheAbstraite res = chercherRecursif(sous, id);
+                if (res != null) return res;
+            }
+        }
+        return null;
     }
 
     private VBox createTaskCard(TacheAbstraite t, int indexColonneSource) {
@@ -285,7 +347,7 @@ public class VueKanban extends BorderPane implements Observateur, VueProjet {
             });
 
             VBox childrenBox = new VBox(5);
-            childrenBox.setPadding(new Insets(5, 0, 0, 15)); // Indentation
+            childrenBox.setPadding(new Insets(5, 0, 0, 15));
             for (TacheAbstraite sous : mere.getSousTaches()) {
                 childrenBox.getChildren().add(createTaskCard(sous, indexColonneSource));
             }
