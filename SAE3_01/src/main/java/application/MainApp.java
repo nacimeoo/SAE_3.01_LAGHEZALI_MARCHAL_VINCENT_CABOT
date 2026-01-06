@@ -55,6 +55,8 @@ public class MainApp extends Application {
                     if (n instanceof Button b) {
                         if ("Vue Liste".equals(b.getText())) {
                             b.setOnAction(e -> afficherListe(projetComplet));
+                        }else if ("Vue Gantt".equals(b.getText())) {
+                            b.setOnAction(e -> afficherGantt(projetComplet));
                         }
                     }
                 }
@@ -95,6 +97,8 @@ public class MainApp extends Application {
                     if (n instanceof Button b) {
                         if ("Vue Kanban".equals(b.getText())) {
                             b.setOnAction(e -> afficherKanban(projetComplet));
+                        }else if ("Vue Gantt".equals(b.getText())) {
+                            b.setOnAction(e -> afficherGantt(projetComplet));
                         }
                     }
                 }
@@ -104,6 +108,10 @@ public class MainApp extends Application {
             primaryStage.setScene(scene);
             primaryStage.setTitle("FRIDAY - Liste " + projetComplet.getNom());
         }
+    }
+
+    public void afficherGantt(Projet projetSelectionne) {
+        throw new Error("Not implemented yet");
     }
 
     public static void main(String[] args) {

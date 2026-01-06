@@ -77,6 +77,10 @@ public class VueKanban extends BorderPane implements Observateur, VueProjet {
         btnListe.setMaxWidth(Double.MAX_VALUE);
         btnListe.setStyle("-fx-background-color: #59a7ff; -fx-border-color: #000000;");
 
+        Button btnGantt = new Button("Vue Gantt");
+        btnGantt.setMaxWidth(Double.MAX_VALUE);
+        btnGantt.setStyle("-fx-background-color: #a1d1f1; -fx-border-color: #000000;");
+
         Label lblAdd = new Label("Ajouter Tache");
         tfTask = new TextField();
         tfTask.setPromptText("Nom de la tâche...");
@@ -102,7 +106,7 @@ public class VueKanban extends BorderPane implements Observateur, VueProjet {
         ControleurSupprimerColonne ctrlSupprCol = new ControleurSupprimerColonne(projet, service, this);
         btnDeleteCol.setOnAction(ctrlSupprCol);
 
-        sidebar.getChildren().addAll(addTacheBox, btnDelete, btnDeleteCol, btnListe);
+        sidebar.getChildren().addAll(addTacheBox, btnDelete, btnDeleteCol, btnListe, btnGantt);
         this.setRight(sidebar);
     }
 

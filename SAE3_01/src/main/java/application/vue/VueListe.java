@@ -21,10 +21,8 @@ import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
+import java.time.format.TextStyle;
+import java.util.*;
 
 
 public class VueListe extends BorderPane implements Observateur, VueProjet {
@@ -99,9 +97,13 @@ public class VueListe extends BorderPane implements Observateur, VueProjet {
 
         Button btnKanban = new Button("Vue Kanban");
         btnKanban.setMaxWidth(Double.MAX_VALUE);
-        btnKanban.setStyle("-fx-background-color: #59a7ff; -fx-border-color: #000000;");
+        btnKanban.setStyle("-fx-background-color: #a964d8; -fx-border-color: #000000;");
 
-        sidebar.getChildren().addAll(addTacheBox, btnDelete,  btnKanban);
+        Button btnGantt = new Button("Vue Gantt");
+        btnGantt.setMaxWidth(Double.MAX_VALUE);
+        btnGantt.setStyle("-fx-background-color: #a1d1f1; -fx-border-color: #000000;");
+
+        sidebar.getChildren().addAll(addTacheBox, btnDelete,  btnKanban, btnGantt);
         this.setRight(sidebar);
     }
 
@@ -139,8 +141,9 @@ public class VueListe extends BorderPane implements Observateur, VueProjet {
         col.setBorder(new Border(new BorderStroke(
                 Color.BLACK, BorderStrokeStyle.SOLID, CornerRadii.EMPTY, new BorderWidths(1)
         )));
-
-        String titre = date.getDayOfWeek() + " " + date;
+        String jour = date.getDayOfWeek().getDisplayName(TextStyle.FULL, Locale.FRENCH);
+        jour = jour.substring(0,1).toUpperCase() + jour.substring(1);
+        String titre = jour  + " " + date;
         Label lblDate = new Label(titre);
         lblDate.setFont(Font.font("Arial", FontWeight.BOLD, 16));
 
@@ -204,33 +207,36 @@ public class VueListe extends BorderPane implements Observateur, VueProjet {
 
     private VBox creerCarteTache(TacheAbstraite t, boolean afficherEntete) {
 
-        VBox bloc = new VBox(2);
+        VBox bloc = new VBox(1);
+        bloc.setMaxWidth(Region.USE_PREF_SIZE);
 
         if (afficherEntete) {
-            HBox entete = new HBox(15);
-            entete.setPadding(new Insets(8));
+            HBox entete = new HBox(6);
+            entete.setPadding(new Insets(4, 6, 4, 6));
             entete.setAlignment(Pos.CENTER_LEFT);
+            entete.setMaxWidth(Region.USE_PREF_SIZE);
             entete.setStyle("""
             -fx-background-color: #f0f0f0;
             -fx-border-color: black;
-            -fx-border-width: 0 0 2 0;
+            -fx-border-width: 0 0 1 0;
             -fx-font-weight: bold;
+            -fx-font-size: 12px;
         """);
 
             Label hNom = new Label("Nom");
-            hNom.setPrefWidth(180);
+            hNom.setPrefWidth(160);
 
             Label hPriorite = new Label("Priorité");
-            hPriorite.setPrefWidth(80);
+            hPriorite.setPrefWidth(70);
 
             Label hEtat = new Label("État");
-            hEtat.setPrefWidth(100);
+            hEtat.setPrefWidth(90);
 
             Label hDuree = new Label("Durée");
-            hDuree.setPrefWidth(80);
+            hDuree.setPrefWidth(70);
 
             Label hDescription = new Label("Description");
-            hDescription.setPrefWidth(300);
+            hDescription.setPrefWidth(260);
 
             entete.getChildren().addAll(
                     hNom, hPriorite, hEtat, hDuree, hDescription
@@ -239,34 +245,36 @@ public class VueListe extends BorderPane implements Observateur, VueProjet {
             bloc.getChildren().add(entete);
         }
 
-        HBox ligne = new HBox(15);
-        ligne.setPadding(new Insets(8));
+        HBox ligne = new HBox(6);
+        ligne.setPadding(new Insets(4, 6, 4, 6));
         ligne.setAlignment(Pos.CENTER_LEFT);
-        ligne.setStyle("-fx-border-color: black; -fx-background-color: white;");
+        ligne.setMaxWidth(Region.USE_PREF_SIZE);
+        ligne.setStyle("""
+        -fx-border-color: black;
+        -fx-background-color: white;
+        -fx-font-size: 12px;
+    """);
 
         Label lblNom = new Label(t.getNom());
-        lblNom.setPrefWidth(180);
+        lblNom.setPrefWidth(160);
 
-        Label lblPriorite = new Label(String.valueOf(t.getPriorite()));
-        lblPriorite.setPrefWidth(80);
+        Label lblPriorite = new Label(
+                t.getPriorite() >= 3 ? "Forte" :
+                        t.getPriorite() == 1 ? "Faible" : "Moyenne"
+        );
+        lblPriorite.setPrefWidth(70);
 
         Label lblEtat = new Label(t.getEtat());
-        lblEtat.setPrefWidth(100);
-
-        System.out.println("L'état est : " + t.getEtat());
+        lblEtat.setPrefWidth(90);
 
         Label lblDuree = new Label(t.getDureeEstimee() + " j");
-        lblDuree.setPrefWidth(80);
+        lblDuree.setPrefWidth(70);
 
         Label lblDescription = new Label(t.getDescription());
-        lblDescription.setPrefWidth(300);
+        lblDescription.setPrefWidth(260);
 
         ligne.getChildren().addAll(
-                lblNom,
-                lblPriorite,
-                lblEtat,
-                lblDuree,
-                lblDescription
+                lblNom, lblPriorite, lblEtat, lblDuree, lblDescription
         );
 
         ligne.setOnMouseClicked(e -> {
@@ -275,11 +283,20 @@ public class VueListe extends BorderPane implements Observateur, VueProjet {
                 new ControleurEditerTache(projet, service, t).handle(e);
             } else {
                 if (vueTacheSelectionnee != null) {
-                    vueTacheSelectionnee.setStyle("-fx-border-color: black; -fx-background-color: white;");
+                    vueTacheSelectionnee.setStyle("""
+                    -fx-border-color: black;
+                    -fx-background-color: white;
+                    -fx-font-size: 12px;
+                """);
                 }
                 tacheSelectionnee = t;
                 vueTacheSelectionnee = ligne;
-                ligne.setStyle("-fx-border-color: blue; -fx-border-width: 2; -fx-background-color: #e6f7ff;");
+                ligne.setStyle("""
+                -fx-border-color: blue;
+                -fx-border-width: 2;
+                -fx-background-color: #e6f7ff;
+                -fx-font-size: 12px;
+            """);
             }
         });
 
@@ -295,6 +312,8 @@ public class VueListe extends BorderPane implements Observateur, VueProjet {
         bloc.getChildren().add(ligne);
         return bloc;
     }
+
+
 
 
 
