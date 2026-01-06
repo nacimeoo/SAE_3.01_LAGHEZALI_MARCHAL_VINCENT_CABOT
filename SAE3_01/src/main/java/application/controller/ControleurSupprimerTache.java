@@ -26,26 +26,21 @@ public class ControleurSupprimerTache implements EventHandler<ActionEvent> {
     public void handle(ActionEvent event) {
 
         TacheAbstraite tacheASupprimer = vue.getTacheSelectionnee();
-
+        Colonne colonneContenante = vue.getColonneSelectionnee();
         if (tacheASupprimer == null) {
             System.out.println("Aucune tâche sélectionnée !");
             return;
         }
 
-        Colonne colonneContenante = null;
-        for(Colonne c : projet.getColonnes()) {
-            if(c.getTaches().contains(tacheASupprimer)) {
-                colonneContenante = c;
-                break;
-            }
-        }
         if (colonneContenante != null) {
             try {
-                service.supprimerTache(projet,colonneContenante, tacheASupprimer);
+                service.supprimerTache(projet, colonneContenante, tacheASupprimer);
                 vue.resetSelection();
             } catch (Exception e) {
                 e.printStackTrace();
             }
+        } else {
+            System.out.println("Erreur : Impossible de déterminer la colonne de la tâche.");
         }
     }
 }

@@ -66,13 +66,11 @@ public class ProjetService {
     public void supprimerTache(Projet projet, Colonne colonne, TacheAbstraite tache) throws Exception {
         if (colonne == null || tache == null) return;
 
-
         tacheDAO.delete(tache.getId());
 
+        nettoyerTacheDeSaStructure(projet, tache);
 
-        colonne.supprimerTache(tache);
         projet.notifierObservateurs();
-
     }
 
     public void deplacerTache(Projet projet, Colonne src, Colonne dest, TacheAbstraite tache) throws Exception {
@@ -231,7 +229,7 @@ public class ProjetService {
         }
         if (core instanceof TacheMere) {
             TacheMere mere = (TacheMere) core;
-            if (mere.getSousTaches().contains(cible)) {
+            if (mere.getSousTaches().stream().anyMatch(t -> t.getId() == cible.getId())) {
                 return mere;
             }
             for (TacheAbstraite sous : mere.getSousTaches()) {

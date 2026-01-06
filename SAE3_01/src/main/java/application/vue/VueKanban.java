@@ -309,6 +309,7 @@ public class VueKanban extends BorderPane implements Observateur, VueProjet {
                 }
                 tacheSelectionnee = t;
                 vueTacheSelectionnee = cardContainer;
+                colonneSelectionnee = projet.getColonnes().get(indexColonneSource);
                 cardContainer.setStyle("-fx-border-color: blue; -fx-border-width: 2; -fx-background-color: #e6f7ff; -fx-background-radius: 5; -fx-border-radius: 5;");
             }
         });
