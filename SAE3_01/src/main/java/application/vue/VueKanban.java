@@ -263,10 +263,12 @@ public class VueKanban extends BorderPane implements Observateur, VueProjet {
     }
 
     private VBox createTaskCard(TacheAbstraite t, int indexColonneSource) {
+        // 1. Structure Principale (Vient du Remote pour supporter les sous-tâches)
         VBox cardContainer = new VBox(5);
         cardContainer.setPadding(new Insets(10));
         cardContainer.setStyle("-fx-border-color: black; -fx-background-color: white; -fx-background-radius: 5; -fx-border-radius: 5;");
 
+        // 2. En-tête de la carte (Nom + Étiquettes)
         HBox cardHeader = new HBox(10);
         cardHeader.setAlignment(Pos.CENTER_LEFT);
 
@@ -274,19 +276,36 @@ public class VueKanban extends BorderPane implements Observateur, VueProjet {
         lblNom.setFont(Font.font("Arial", FontWeight.BOLD, 13));
         cardHeader.getChildren().add(lblNom);
 
-        TacheAbstraite temp = t;
-        while (temp instanceof TacheDecorateur) {
-            if (temp instanceof Etiquette) {
-                Etiquette e = (Etiquette) temp;
-                Label labelEtiquette = new Label(e.getLibelle());
-                labelEtiquette.setStyle("-fx-background-color: #e0e0e0; -fx-padding: 2 5 2 5; -fx-background-radius: 3; -fx-font-size: 10;");
-                cardHeader.getChildren().add(labelEtiquette);
+        // 3. Boucle d'affichage des étiquettes (Fusion : Structure Remote + Logique couleur HEAD)
+        TacheAbstraite current = t;
+        while (current instanceof TacheDecorateur) {
+            if (current instanceof Etiquette) {
+                Etiquette et = (Etiquette) current;
+
+                Label lblEtiquette = new Label(et.getLibelle());
+
+                // Récupération de la couleur (Vient du HEAD)
+                String hexColor = et.getCouleur().startsWith("0x") ? et.getCouleur().replace("0x", "#") : et.getCouleur();
+
+                // Style combiné (Vient du HEAD pour la couleur, ajusté pour la taille)
+                lblEtiquette.setStyle(
+                        "-fx-background-color: " + hexColor + ";" +
+                                "-fx-text-fill: white;" +
+                                "-fx-padding: 2 5;" +
+                                "-fx-background-radius: 3;" + // Légèrement ajusté pour correspondre au nouveau look
+                                "-fx-font-size: 10px;" +
+                                "-fx-font-weight: bold;"
+                );
+
+                // On ajoute au HEADER (et non à cardContainer directement) pour qu'elles soient à côté du nom
+                cardHeader.getChildren().add(lblEtiquette);
             }
-            temp = ((TacheDecorateur) temp).getTacheDecoree();
+            current = ((TacheDecorateur) current).getTacheDecoree();
         }
 
         cardContainer.getChildren().add(cardHeader);
 
+        // 4. Gestion du Clic (Vient du Remote, adapté au container VBox)
         cardContainer.setOnMouseClicked(e -> {
             e.consume();
 
@@ -294,6 +313,7 @@ public class VueKanban extends BorderPane implements Observateur, VueProjet {
                 new ControleurEditerTache(projet, service, t).handle(e);
             } else {
                 if (vueTacheSelectionnee != null) {
+                    // Cast en Region pour être sûr de pouvoir appliquer le style
                     ((Region)vueTacheSelectionnee).setStyle("-fx-border-color: black; -fx-background-color: white; -fx-background-radius: 5; -fx-border-radius: 5;");
                 }
                 tacheSelectionnee = t;
@@ -302,6 +322,7 @@ public class VueKanban extends BorderPane implements Observateur, VueProjet {
             }
         });
 
+        // 5. Drag & Drop de base (Déplacement)
         cardContainer.setOnDragDetected(event -> {
             Dragboard db = cardContainer.startDragAndDrop(TransferMode.MOVE);
             ClipboardContent content = new ClipboardContent();
@@ -310,6 +331,7 @@ public class VueKanban extends BorderPane implements Observateur, VueProjet {
             event.consume();
         });
 
+        // 6. Gestion des Tâches Mères / Sous-tâches (Vient du Remote - "Les nouveaux trucs")
         TacheAbstraite core = t;
         while (core instanceof TacheDecorateur) {
             core = ((TacheDecorateur) core).getTacheDecoree();
@@ -318,14 +340,21 @@ public class VueKanban extends BorderPane implements Observateur, VueProjet {
         if (core instanceof TacheMere) {
             TacheMere mere = (TacheMere) core;
 
+            // Drag over pour accepter les dépendances
             cardContainer.setOnDragOver(event -> {
                 if (event.getDragboard().hasString()) {
-                    int idSource = Integer.parseInt(event.getDragboard().getString().split(":")[1]);
-                    if (idSource != t.getId()) event.acceptTransferModes(TransferMode.MOVE);
+                    try {
+                        String data = event.getDragboard().getString();
+                        if (data.contains(":")) {
+                            int idSource = Integer.parseInt(data.split(":")[1]);
+                            if (idSource != t.getId()) event.acceptTransferModes(TransferMode.MOVE);
+                        }
+                    } catch (Exception e) { /* Ignorer les erreurs de parsing pendant le drag */ }
                 }
                 event.consume();
             });
 
+            // Drop pour créer la dépendance/sous-tâche
             cardContainer.setOnDragDropped(event -> {
                 Dragboard db = event.getDragboard();
                 if (db.hasString()) {
@@ -346,6 +375,7 @@ public class VueKanban extends BorderPane implements Observateur, VueProjet {
                 event.consume();
             });
 
+            // Affichage récursif des enfants
             VBox childrenBox = new VBox(5);
             childrenBox.setPadding(new Insets(5, 0, 0, 15));
             for (TacheAbstraite sous : mere.getSousTaches()) {
@@ -356,4 +386,6 @@ public class VueKanban extends BorderPane implements Observateur, VueProjet {
 
         return cardContainer;
     }
+
+
 }
