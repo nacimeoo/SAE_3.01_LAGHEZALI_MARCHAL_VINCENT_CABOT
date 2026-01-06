@@ -134,15 +134,19 @@ public class ProjetService {
         }
 
         tacheDAO.update_detail(tacheRacine);
-
+        etiquetteDAO.supprimerLiensEtiquettes(tacheRacine.getId());
         TacheAbstraite courant = tacheModifiee;
         while (courant instanceof TacheDecorateur) {
             if (courant instanceof Etiquette) {
                 Etiquette et = (Etiquette) courant;
+
                 if (et.getId() == 0) {
                     etiquetteDAO.save(et);
-                    etiquetteDAO.attachEtiquetteToTache(et.getId(), tacheRacine.getId());
+                } else {
+                    etiquetteDAO.save(et);
                 }
+
+                etiquetteDAO.attachEtiquetteToTache(et.getId(), tacheRacine.getId());
             }
             courant = ((TacheDecorateur) courant).getTacheDecoree();
         }
@@ -190,7 +194,9 @@ public class ProjetService {
                 for (TacheAbstraite t : taches) {
                     List<Etiquette> etiquettes = etiquetteDAO.getEtiquettesByTacheId(t.getId());
                     for (Etiquette eInfo : etiquettes) {
-                        t = new Etiquette(t, eInfo.getLibelle(), eInfo.getCouleur());
+                        Etiquette etDecorateur = new Etiquette(t, eInfo.getLibelle(), eInfo.getCouleur());
+                        etDecorateur.setId(eInfo.getId());
+                        t = etDecorateur;
                     }
                     col.ajouterTache(t);
                 }
