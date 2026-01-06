@@ -183,6 +183,47 @@ public class ProjetService {
         return true;
     }
 
+    public void detacherSousTache(Projet projet, TacheAbstraite tache, Colonne col) throws Exception {
+        if (projet == null || tache == null) return;
+        tacheDAO.detacherSousTache(tache.getId(), col.getId());
+        TacheMere parent = trouverParent(projet, tache);
+        if (parent != null) {
+            parent.supprimerDependance(tache);
+        }
+        if (!col.getTaches().contains(tache)) {
+            col.ajouterTache(tache);
+        }
+        projet.notifierObservateurs();
+    }
+
+    private TacheMere trouverParent(Projet projet, TacheAbstraite fille) {
+        for (Colonne c : projet.getColonnes()) {
+            for (TacheAbstraite t : c.getTaches()) {
+                TacheMere parent = chercherParentRecursif(t, fille);
+                if (parent != null) return parent;
+            }
+        }
+        return null;
+    }
+
+    private TacheMere chercherParentRecursif(TacheAbstraite current, TacheAbstraite cible) {
+        TacheAbstraite core = current;
+        while (core instanceof TacheDecorateur) {
+            core = ((TacheDecorateur) core).getTacheDecoree();
+        }
+        if (core instanceof TacheMere) {
+            TacheMere mere = (TacheMere) core;
+            if (mere.getSousTaches().contains(cible)) {
+                return mere;
+            }
+            for (TacheAbstraite sous : mere.getSousTaches()) {
+                TacheMere res = chercherParentRecursif(sous, cible);
+                if (res != null) return res;
+            }
+        }
+        return null;
+    }
+
     public Projet chargerProjetComplet(int idProjet) {
         try {
             Projet p = projetDAO.getProjetById(idProjet);

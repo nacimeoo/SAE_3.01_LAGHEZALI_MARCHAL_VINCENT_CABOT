@@ -31,7 +31,7 @@ public class VueListe extends BorderPane implements Observateur, VueProjet {
     private Projet projet;
     private ProjetService service;
 
-    private HBox boardContainer;
+    private VBox boardContainer;
     private TextField tfTask;
 
     private TacheAbstraite tacheSelectionnee = null;
@@ -64,7 +64,7 @@ public class VueListe extends BorderPane implements Observateur, VueProjet {
         this.setTop(header);
 
 
-        boardContainer = new HBox(15);
+        boardContainer = new VBox(15);
         boardContainer.setPadding(new Insets(10));
         ScrollPane scrollPane = new ScrollPane(boardContainer);
         scrollPane.setFitToHeight(true);
@@ -160,7 +160,7 @@ public class VueListe extends BorderPane implements Observateur, VueProjet {
         });
 
         for (TacheAbstraite t : taches) {
-            col.getChildren().add(creerCarteTache(t));
+            col.getChildren().add(creerCarteTache(t, true));
         }
 
         col.setOnDragOver(event -> {
@@ -202,16 +202,74 @@ public class VueListe extends BorderPane implements Observateur, VueProjet {
         return col;
     }
 
-    private HBox creerCarteTache(TacheAbstraite t) {
-        HBox card = new HBox();
-        card.setPadding(new Insets(10));
-        card.setStyle("-fx-border-color: black; -fx-background-color: white;");
-        card.setAlignment(Pos.CENTER_LEFT);
+    private VBox creerCarteTache(TacheAbstraite t, boolean afficherEntete) {
 
-        Label lbl = new Label(t.getNom());
-        card.getChildren().add(lbl);
+        VBox bloc = new VBox(2);
 
-        card.setOnMouseClicked(e -> {
+        if (afficherEntete) {
+            HBox entete = new HBox(15);
+            entete.setPadding(new Insets(8));
+            entete.setAlignment(Pos.CENTER_LEFT);
+            entete.setStyle("""
+            -fx-background-color: #f0f0f0;
+            -fx-border-color: black;
+            -fx-border-width: 0 0 2 0;
+            -fx-font-weight: bold;
+        """);
+
+            Label hNom = new Label("Nom");
+            hNom.setPrefWidth(180);
+
+            Label hPriorite = new Label("Priorité");
+            hPriorite.setPrefWidth(80);
+
+            Label hEtat = new Label("État");
+            hEtat.setPrefWidth(100);
+
+            Label hDuree = new Label("Durée");
+            hDuree.setPrefWidth(80);
+
+            Label hDescription = new Label("Description");
+            hDescription.setPrefWidth(300);
+
+            entete.getChildren().addAll(
+                    hNom, hPriorite, hEtat, hDuree, hDescription
+            );
+
+            bloc.getChildren().add(entete);
+        }
+
+        HBox ligne = new HBox(15);
+        ligne.setPadding(new Insets(8));
+        ligne.setAlignment(Pos.CENTER_LEFT);
+        ligne.setStyle("-fx-border-color: black; -fx-background-color: white;");
+
+        Label lblNom = new Label(t.getNom());
+        lblNom.setPrefWidth(180);
+
+        Label lblPriorite = new Label(String.valueOf(t.getPriorite()));
+        lblPriorite.setPrefWidth(80);
+
+        Label lblEtat = new Label(t.getEtat());
+        lblEtat.setPrefWidth(100);
+
+        System.out.println("L'état est : " + t.getEtat());
+
+        Label lblDuree = new Label(t.getDureeEstimee() + " j");
+        lblDuree.setPrefWidth(80);
+
+        Label lblDescription = new Label(t.getDescription());
+        lblDescription.setPrefWidth(300);
+
+        ligne.getChildren().addAll(
+                lblNom,
+                lblPriorite,
+                lblEtat,
+                lblDuree,
+                lblDescription
+        );
+
+        ligne.setOnMouseClicked(e -> {
             e.consume();
             if (e.getClickCount() == 2) {
                 new ControleurEditerTache(projet, service, t).handle(e);
@@ -220,22 +278,26 @@ public class VueListe extends BorderPane implements Observateur, VueProjet {
                     vueTacheSelectionnee.setStyle("-fx-border-color: black; -fx-background-color: white;");
                 }
                 tacheSelectionnee = t;
-                vueTacheSelectionnee = card;
-                card.setStyle("-fx-border-color: blue; -fx-border-width: 2; -fx-background-color: #e6f7ff;");
+                vueTacheSelectionnee = ligne;
+                ligne.setStyle("-fx-border-color: blue; -fx-border-width: 2; -fx-background-color: #e6f7ff;");
             }
         });
 
-        card.setOnDragDetected(e -> {
-            Dragboard db = card.startDragAndDrop(TransferMode.MOVE);
+        ligne.setOnDragDetected(e -> {
+            Dragboard db = ligne.startDragAndDrop(TransferMode.MOVE);
             ClipboardContent content = new ClipboardContent();
-            content.putString( String.valueOf(t.getId()));
+            content.putString(String.valueOf(t.getId()));
             db.setContent(content);
-            db.setDragView(card.snapshot(new SnapshotParameters(), null));
+            db.setDragView(ligne.snapshot(new SnapshotParameters(), null));
             e.consume();
         });
 
-        return card;
+        bloc.getChildren().add(ligne);
+        return bloc;
     }
+
+
+
 
     public TacheAbstraite getTacheSelectionnee() { return tacheSelectionnee; }
     public Colonne getColonneSelectionnee() { return this.colonneSelectionnee; }

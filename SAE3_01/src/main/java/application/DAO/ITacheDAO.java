@@ -14,4 +14,5 @@ public interface ITacheDAO {
     void update_detail(TacheAbstraite tache) throws Exception;
     void addDependanceDAO(int idTacheMere, int idSousTache) throws Exception;
     void chargerSousTaches(TacheMere mere) throws Exception;
+    void detacherSousTache(int idTache, int idColonne) throws Exception;
 }

@@ -56,11 +56,28 @@ public class Projet implements Sujet {
 
     public List<TacheAbstraite> getAllTaches() {
         List<TacheAbstraite> toutes = new ArrayList<>();
-        for (Colonne c : colonnes) {
-            toutes.addAll(c.getTaches());
+
+        for (Colonne colonne : colonnes) {
+            for (TacheAbstraite tache : colonne.getTaches()) {
+                ajouterTacheAvecSousTaches(tache, toutes);
+            }
         }
+
         return toutes;
     }
+    private void ajouterTacheAvecSousTaches(TacheAbstraite tache, List<TacheAbstraite> liste) {
+        if (!liste.contains(tache)) {
+            liste.add(tache);
+        }
+
+        if (tache instanceof TacheMere) {
+            for (TacheAbstraite sousTache : ((TacheMere) tache).getSousTaches()) {
+                ajouterTacheAvecSousTaches(sousTache, liste);
+            }
+        }
+    }
+
+
 
     public TacheAbstraite getTacheById(String id) {
         int idTache = Integer.parseInt(id);

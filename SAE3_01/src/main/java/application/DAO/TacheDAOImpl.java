@@ -23,10 +23,12 @@ public class TacheDAOImpl implements ITacheDAO {
         t.setPriorite(rs.getInt("priorite"));
         t.setEtat(rs.getString("etat"));
 
-        Date sqlDate = rs.getDate("DateDebut");
+        Date sqlDate = rs.getDate("dateDebut");
         if (sqlDate != null) {
             t.setDateDebut(sqlDate.toLocalDate());
         }
+
+        t.setDureeEstimee(rs.getInt("duree"));
 
         return t;
     }
@@ -59,7 +61,6 @@ public class TacheDAOImpl implements ITacheDAO {
             ps.setInt(1, mere.getId());
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    // Utilisation de getTacheById pour charger récursivement toute l'arborescence
                     TacheAbstraite enfant = getTacheById(rs.getInt("id_sous_tache"));
                     if (enfant != null) {
                         mere.ajouterDependance(enfant);
@@ -128,41 +129,49 @@ public class TacheDAOImpl implements ITacheDAO {
 
             if (exist) {
                 String sqlUpdate = """
-                        UPDATE tache
-                        SET titre = ?, type = ?, description = ?, priorite = ?, etat = ?, DateDebut = ?
-                        WHERE id = ?
-                        """;
+                    UPDATE tache
+                    SET titre = ?, type = ?, description = ?, priorite = ?, etat = ?, DateDebut = ?, duree = ?
+                    WHERE id = ?
+                    """;
                 try (PreparedStatement psUpdate = con.prepareStatement(sqlUpdate)) {
                     psUpdate.setString(1, tache.getNom());
                     psUpdate.setInt(2, (tache instanceof TacheMere) ? 0 : 1);
                     psUpdate.setString(3, tache.getDescription());
                     psUpdate.setInt(4, tache.getPriorite());
                     psUpdate.setString(5, tache.getEtat());
-                    if (tache.getDate() != null) {
-                        psUpdate.setDate(6, Date.valueOf(tache.getDate()));
+
+                    if (tache.getDateDebut() != null) {
+                        psUpdate.setDate(6, Date.valueOf(tache.getDateDebut()));
                     } else {
                         psUpdate.setNull(6, Types.DATE);
                     }
-                    psUpdate.setInt(7, tache.getId());
+                    psUpdate.setInt(7, tache.getDureeEstimee());
+                    psUpdate.setInt(8, tache.getId());
+
                     psUpdate.executeUpdate();
                 }
             } else {
                 String sqlInsert = """
-                        INSERT INTO tache (titre, type, description, priorite, etat, DateDebut)
-                        VALUES (?, ?, ?, ?, ?, ?)
-                        """;
+                    INSERT INTO tache (titre, type, description, priorite, etat, DateDebut, duree)
+                    VALUES (?, ?, ?, ?, ?, ?, ?)
+                    """;
                 try (PreparedStatement psInsert = con.prepareStatement(sqlInsert, Statement.RETURN_GENERATED_KEYS)) {
                     psInsert.setString(1, tache.getNom());
                     psInsert.setInt(2, (tache instanceof TacheMere) ? 0 : 1);
                     psInsert.setString(3, tache.getDescription());
                     psInsert.setInt(4, tache.getPriorite());
                     psInsert.setString(5, tache.getEtat());
-                    if (tache.getDate() != null) {
-                        psInsert.setDate(6, Date.valueOf(tache.getDate()));
+
+                    if (tache.getDateDebut() != null) {
+                        psInsert.setDate(6, Date.valueOf(tache.getDateDebut()));
                     } else {
                         psInsert.setNull(6, Types.DATE);
                     }
+
+                    psInsert.setInt(7, tache.getDureeEstimee());
+
                     psInsert.executeUpdate();
+
                     try (ResultSet generatedKeys = psInsert.getGeneratedKeys()) {
                         if (generatedKeys.next()) {
                             tache.setId(generatedKeys.getInt(1));
@@ -207,7 +216,7 @@ public class TacheDAOImpl implements ITacheDAO {
     public void update_detail(TacheAbstraite tache) throws Exception {
         String sql = """
                 UPDATE tache
-                SET titre = ?, description = ?, priorite = ?, etat = ?, DateDebut = ?
+                SET titre = ?, description = ?, priorite = ?, etat = ?, DateDebut = ?, duree = ?
                 WHERE id = ?
                 """;
         try (Connection con = DBConnection.getConnection();
@@ -221,8 +230,32 @@ public class TacheDAOImpl implements ITacheDAO {
             } else {
                 stmt.setNull(5, Types.DATE);
             }
-            stmt.setInt(6, tache.getId());
+            stmt.setInt(6, tache.getDureeEstimee());
+            stmt.setInt(7, tache.getId());
             stmt.executeUpdate();
+        }
+    }
+
+    public void detacherSousTache(int idTache, int idColonne) throws Exception {
+        String sqlDeleteDep = "DELETE FROM dependance WHERE id_sous_tache = ?";
+        String sqlInsertCol = "INSERT INTO colonne2tache (id_colonne, id_tache) VALUES (?, ?) " +
+                "ON DUPLICATE KEY UPDATE id_colonne = id_colonne";
+
+        try (Connection con = DBConnection.getConnection()) {
+            con.setAutoCommit(false);
+            try (PreparedStatement ps1 = con.prepareStatement(sqlDeleteDep);
+                 PreparedStatement ps2 = con.prepareStatement(sqlInsertCol)) {
+                ps1.setInt(1, idTache);
+                ps1.executeUpdate();
+                ps2.setInt(1, idColonne);
+                ps2.setInt(2, idTache);
+                ps2.executeUpdate();
+
+                con.commit();
+            } catch (Exception e) {
+                con.rollback();
+                throw e;
+            }
         }
     }
 }

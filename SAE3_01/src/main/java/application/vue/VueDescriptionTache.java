@@ -41,6 +41,27 @@ public class VueDescriptionTache extends Dialog<TacheAbstraite> {
         cbEtat.getItems().addAll("A faire", "En cours", "Terminer", "En attente");
         cbEtat.setValue(tache.getEtat() != null ? tache.getEtat() : "A faire");
 
+        ComboBox<String> cbPriorite = new ComboBox<>();
+        cbPriorite.getItems().addAll("Faible", "Moyenne", "Haute");
+
+        int currentPrio = tache.getPriorite();
+        if (currentPrio >= 3) {
+            cbPriorite.setValue("Haute");
+        } else if (currentPrio == 1) {
+            cbPriorite.setValue("Faible");
+        } else {
+            cbPriorite.setValue("Moyenne");
+        }
+
+        DatePicker dpDate = new DatePicker();
+        if (tache.getDateDebut() != null) {
+            dpDate.setValue(tache.getDateDebut());
+        }
+
+        TextField tfDuree = new TextField();
+        tfDuree.setPromptText("En minutes (ex: 60)");
+        tfDuree.setText(String.valueOf(tache.getDureeEstimee()));
+
         FlowPane zoneEtiquettes = new FlowPane();
         zoneEtiquettes.setHgap(5);
         updateAffichageEtiquettes(zoneEtiquettes);
@@ -71,11 +92,16 @@ public class VueDescriptionTache extends Dialog<TacheAbstraite> {
         grid.add(taDesc, 1, 1);
         grid.add(new Label("Etat:"), 0, 2);
         grid.add(cbEtat, 1, 2);
-
-        grid.add(new Label("Etiquettes:"), 0, 3);
-        grid.add(zoneEtiquettes, 1, 3);
-        grid.add(new Label("Nouvelle:"), 0, 4);
-        grid.add(boxAjoutEtiquette, 1, 4);
+        grid.add(new Label("Priorité:"), 0, 3);
+        grid.add(cbPriorite, 1, 3);
+        grid.add(new Label("Date Début:"), 0, 4);
+        grid.add(dpDate, 1, 4);
+        grid.add(new Label("Durée (en Jours) :"), 0, 5);
+        grid.add(tfDuree, 1, 5);
+        grid.add(new Label("Etiquettes:"), 0, 6);
+        grid.add(zoneEtiquettes, 1, 6);
+        grid.add(new Label("Nouvelle:"), 0, 7);
+        grid.add(boxAjoutEtiquette, 1, 7);
 
         this.getDialogPane().setContent(grid);
 
@@ -84,6 +110,31 @@ public class VueDescriptionTache extends Dialog<TacheAbstraite> {
                 tacheEnCoursEdition.setNom(tfTitre.getText());
                 tacheEnCoursEdition.setDescription(taDesc.getText());
                 tacheEnCoursEdition.setEtat(cbEtat.getValue());
+                tacheEnCoursEdition.setNom(tfTitre.getText());
+                tacheEnCoursEdition.setDescription(taDesc.getText());
+                tacheEnCoursEdition.setEtat(cbEtat.getValue());
+
+                String prioTexte = cbPriorite.getValue();
+                int prioInt = 2;
+                if ("Faible".equals(prioTexte)) prioInt = 1;
+                else if ("Haute".equals(prioTexte)) prioInt = 3;
+
+                tacheEnCoursEdition.setPriorite(prioInt);
+
+                tacheEnCoursEdition.setDateDebut(dpDate.getValue());
+
+                try {
+                    String dureeTxt = tfDuree.getText();
+                    if (dureeTxt != null && !dureeTxt.trim().isEmpty()) {
+                        int duree = Integer.parseInt(dureeTxt.trim());
+                        tacheEnCoursEdition.setDureeEstimee(duree);
+                    } else {
+                        tacheEnCoursEdition.setDureeEstimee(1);
+                    }
+                } catch (NumberFormatException e) {
+                    System.err.println("Erreur de format pour la durée");
+                }
+
                 return tacheEnCoursEdition;
             }
             return null;

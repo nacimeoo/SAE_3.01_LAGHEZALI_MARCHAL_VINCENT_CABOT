@@ -27,11 +27,11 @@ public class ControleurAjouterTache implements EventHandler<ActionEvent> {
         String nomTache = champSaisie.getText();
         if (nomTache != null && !nomTache.trim().isEmpty() && !projet.getColonnes().isEmpty()) {
             Colonne colSelectionnee = vue.getColonneSelectionnee();
-            int indexColonne = 0;
-            if (colSelectionnee != null) {
-                indexColonne = projet.getColonnes().indexOf(colSelectionnee);
-                if (indexColonne == -1) indexColonne = 0;
+
+            if (colSelectionnee == null) {
+                colSelectionnee = projet.getColonnes().get(0);
             }
+
             TacheAbstraite nouvelleTache = new TacheMere(nomTache);
             try {
                 service.ajouterTache(projet,colSelectionnee, nouvelleTache);
