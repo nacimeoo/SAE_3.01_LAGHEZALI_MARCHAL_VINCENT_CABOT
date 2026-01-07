@@ -7,7 +7,7 @@ public abstract class TacheDecorateur extends TacheAbstraite{
     protected TacheAbstraite tacheDecoree;
 
     public TacheDecorateur(TacheAbstraite tacheDecoree) {
-        super(tacheDecoree.getNom());
+        super(tacheDecoree != null ? tacheDecoree.getNom() : "");
         this.tacheDecoree = tacheDecoree;
     }
 
@@ -36,6 +36,9 @@ public abstract class TacheDecorateur extends TacheAbstraite{
     public int getId() { return tacheDecoree.getId(); }
     @Override
     public void setId(int id) { tacheDecoree.setId(id); }
+
+    @Override
+    public LocalDate getDate() { return tacheDecoree.getDate(); }
 
     @Override
     public String getNom() { return tacheDecoree.getNom(); }

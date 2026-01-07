@@ -1,24 +1,16 @@
 package application.vue;
 
 import application.*;
-import application.controller.ControleurAjouterTache;
-import application.controller.ControleurSupprimerTache;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
-import javafx.scene.control.TextField;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
-
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
 
 public class VueGantt extends BorderPane implements Observateur{
 
@@ -26,6 +18,9 @@ public class VueGantt extends BorderPane implements Observateur{
     private ProjetService service;
 
     private VBox boardContainer;
+
+    private final int LARGEUR_JOUR = 75;
+    private final int HAUTEUR_LIGNE = 50;
 
 
     public VueGantt(Projet projet, ProjetService service) {
@@ -74,8 +69,90 @@ public class VueGantt extends BorderPane implements Observateur{
     }
 
     private void rafraichirVue() {
-        boardContainer.getChildren().clear();
+        Pane surfaceDessin = new Pane();
+        surfaceDessin.setMinWidth(800);
+        surfaceDessin.setMinHeight(600);
 
+        LocalDate dateZero = (projet.getDateCreation() != null) ?
+                new java.sql.Date(projet.getDateCreation().getTime()).toLocalDate() :
+                LocalDate.now();
+
+        for (int i = 0; i < 60; i++) {
+            double x = i * LARGEUR_JOUR;
+
+            javafx.scene.shape.Line ligne = new javafx.scene.shape.Line(x, 0, x, 1500);
+            ligne.setStroke(Color.LIGHTGRAY);
+            ligne.getStrokeDashArray().addAll(5d, 5d);
+
+            Label dateLbl = new Label(dateZero.plusDays(i).toString());
+            dateLbl.setLayoutX(x + 5);
+            dateLbl.setLayoutY(0);
+            dateLbl.setFont(Font.font("Arial", 10));
+
+            surfaceDessin.getChildren().addAll(ligne, dateLbl);
+        }
+
+        int indexLigne = 1;
+
+        for (Colonne colonne : projet.getColonnes()) {
+            for(TacheAbstraite t : colonne.getTaches()) {
+                indexLigne = dessinerTacheRecursive(t, dateZero, surfaceDessin, indexLigne);
+            }
+        }
+        ((ScrollPane) this.getCenter()).setContent(surfaceDessin);
+    }
+
+    private int dessinerTacheRecursive(TacheAbstraite t, LocalDate dateZero, Pane surfaceDessin, int indexLigne) {
+
+        TacheAbstraite tacheReelle = t;
+
+        if (t.getDateDebut() != null) {
+            long joursEcoules = java.time.temporal.ChronoUnit.DAYS.between(dateZero, t.getDateDebut());
+
+            if (joursEcoules < 0) joursEcoules = 0;
+
+            double x = joursEcoules * LARGEUR_JOUR;
+            double y = indexLigne * HAUTEUR_LIGNE;
+
+            double duree = (t.getDureeEstimee() > 0) ? t.getDureeEstimee() : 1;
+            double largeur = duree * LARGEUR_JOUR;
+
+            javafx.scene.shape.Rectangle barre = new javafx.scene.shape.Rectangle(x, y, largeur, 40);
+            barre.setArcWidth(10);
+            barre.setArcHeight(10);
+
+            while (tacheReelle instanceof TacheDecorateur) {
+                tacheReelle = ((TacheDecorateur) tacheReelle).getTacheDecoree();
+            }
+
+            if (tacheReelle instanceof SousTache) {
+                barre.setFill(Color.CORNFLOWERBLUE);
+                barre.setStroke(null);
+            }
+            else if (tacheReelle instanceof TacheMere) {
+                barre.setFill(Color.DARKBLUE);
+            }
+            else {
+                barre.setFill(Color.ORANGE);
+            }
+
+            Label nom = new Label(t.getNom());
+            nom.setLayoutX(x + 5);
+            nom.setLayoutY(y + 4);
+            nom.setTextFill(Color.WHITE);
+
+            surfaceDessin.getChildren().addAll(barre, nom);
+        }
+        int nouvelIndex = indexLigne + 1;
+
+        if (tacheReelle instanceof TacheMere) {
+            TacheMere mere = (TacheMere) tacheReelle;
+            for (TacheAbstraite enfant : mere.getSousTaches()) {
+                nouvelIndex = dessinerTacheRecursive(enfant, dateZero, surfaceDessin, nouvelIndex);
+            }
+        }
+
+        return nouvelIndex;
     }
 
     @Override
