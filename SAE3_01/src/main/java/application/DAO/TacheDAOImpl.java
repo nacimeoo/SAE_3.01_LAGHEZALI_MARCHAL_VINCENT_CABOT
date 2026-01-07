@@ -8,7 +8,11 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
+//0=TacheMere
+//1=SousTache
+
 public class TacheDAOImpl implements ITacheDAO {
+
 
     private TacheAbstraite construireTache(ResultSet rs) throws SQLException {
         TacheAbstraite t;
@@ -23,28 +27,35 @@ public class TacheDAOImpl implements ITacheDAO {
         t.setPriorite(rs.getInt("priorite"));
         t.setEtat(rs.getString("etat"));
 
-        Date sqlDate = rs.getDate("dateDebut");
+        Date sqlDate = rs.getDate("DateDebut");
         if (sqlDate != null) {
             t.setDateDebut(sqlDate.toLocalDate());
         }
 
-        t.setDureeEstimee(rs.getInt("duree"));
+        try {
+            t.setDureeEstimee(rs.getInt("duree"));
+        } catch (SQLException e) {
+        }
 
         return t;
     }
 
     @Override
     public TacheAbstraite getTacheById(int id) throws Exception {
-        String sql = "SELECT * FROM tache WHERE id = ?";
-        try (Connection con = DBConnection.getConnection();
-             PreparedStatement stmt = con.prepareStatement(sql)) {
+        try (Connection con = DBConnection.getConnection()) {
+            return getTacheByIdInternal(id, con);
+        }
+    }
 
+    private TacheAbstraite getTacheByIdInternal(int id, Connection con) throws Exception {
+        String sql = "SELECT * FROM tache WHERE id = ?";
+        try (PreparedStatement stmt = con.prepareStatement(sql)) {
             stmt.setInt(1, id);
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
                     TacheAbstraite t = construireTache(rs);
                     if (t instanceof TacheMere) {
-                        chargerSousTaches((TacheMere) t);
+                        chargerSousTachesInternal((TacheMere) t, con);
                     }
                     return t;
                 }
@@ -53,15 +64,14 @@ public class TacheDAOImpl implements ITacheDAO {
         return null;
     }
 
-    public void chargerSousTaches(TacheMere mere) throws Exception {
+    private void chargerSousTachesInternal(TacheMere mere, Connection con) throws Exception {
         String sql = "SELECT id_sous_tache FROM dependance WHERE id_tache_mere = ?";
-        try (Connection con = DBConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
-
+        try (PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setInt(1, mere.getId());
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    TacheAbstraite enfant = getTacheById(rs.getInt("id_sous_tache"));
+                    // Appel récursif avec la MÊME connexion
+                    TacheAbstraite enfant = getTacheByIdInternal(rs.getInt("id_sous_tache"), con);
                     if (enfant != null) {
                         mere.ajouterDependance(enfant);
                     }
@@ -70,27 +80,15 @@ public class TacheDAOImpl implements ITacheDAO {
         }
     }
 
-    @Override
-    public List<TacheAbstraite> getAllTaches() throws Exception {
-        String sql = "SELECT * FROM tache where etat <> 'Archivée'";
-        List<TacheAbstraite> taches = new ArrayList<>();
-        try (Connection con = DBConnection.getConnection();
-             Statement stmt = con.createStatement();
-             ResultSet rs = stmt.executeQuery(sql)) {
-
-            while (rs.next()) {
-                TacheAbstraite t = construireTache(rs);
-                if (t instanceof TacheMere) {
-                    chargerSousTaches((TacheMere) t);
-                }
-                taches.add(t);
-            }
+    public void chargerSousTaches(TacheMere mere) throws Exception {
+        try (Connection con = DBConnection.getConnection()) {
+            chargerSousTachesInternal(mere, con);
         }
-        return taches;
     }
 
-    public List<TacheAbstraite> getAllTachesArchivee() throws Exception {
-        String sql = "SELECT * FROM tache where etat == 'Archivée'";
+    @Override
+    public List<TacheAbstraite> getAllTaches() throws Exception {
+        String sql = "SELECT * FROM tache WHERE etat <> 'Archivée'";
         List<TacheAbstraite> taches = new ArrayList<>();
         try (Connection con = DBConnection.getConnection();
              Statement stmt = con.createStatement();
@@ -99,7 +97,8 @@ public class TacheDAOImpl implements ITacheDAO {
             while (rs.next()) {
                 TacheAbstraite t = construireTache(rs);
                 if (t instanceof TacheMere) {
-                    chargerSousTaches((TacheMere) t);
+                    // Utilisation de la méthode interne pour charger l'arbre complet
+                    chargerSousTachesInternal((TacheMere) t, con);
                 }
                 taches.add(t);
             }
@@ -114,8 +113,10 @@ public class TacheDAOImpl implements ITacheDAO {
             FROM tache t
             INNER JOIN colonne2tache c2t ON c2t.id_tache = t.id
             WHERE c2t.id_colonne = ?
-            AND t.id NOT IN (SELECT id_sous_tache FROM dependance) and t.etat <> 'Archivée'
+            AND t.id NOT IN (SELECT id_sous_tache FROM dependance)
+            AND t.etat <> 'Archivée'
             """;
+
         List<TacheAbstraite> taches = new ArrayList<>();
         try (Connection con = DBConnection.getConnection();
              PreparedStatement stmt = con.prepareStatement(sql)) {
@@ -125,7 +126,35 @@ public class TacheDAOImpl implements ITacheDAO {
                 while (rs.next()) {
                     TacheAbstraite t = construireTache(rs);
                     if (t instanceof TacheMere) {
-                        chargerSousTaches((TacheMere) t);
+                        chargerSousTachesInternal((TacheMere) t, con);
+                    }
+                    taches.add(t);
+                }
+            }
+        }
+        return taches;
+    }
+
+    @Override
+    public List<TacheAbstraite> getTachesArchivees(int idProjet) throws Exception {
+        String sql = """
+            SELECT DISTINCT t.* FROM tache t
+            JOIN colonne2tache c2t ON t.id = c2t.id_tache
+            JOIN colonne c ON c2t.id_colonne = c.id
+            JOIN projet2colonne p2c ON c.id = p2c.id_colonne
+            WHERE p2c.id_projet = ? AND t.etat = 'Archivée'
+        """;
+
+        List<TacheAbstraite> taches = new ArrayList<>();
+        try (Connection con = DBConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+
+            ps.setInt(1, idProjet);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    TacheAbstraite t = construireTache(rs);
+                    if (t instanceof TacheMere) {
+                        chargerSousTachesInternal((TacheMere) t, con);
                     }
                     taches.add(t);
                 }
@@ -147,17 +176,16 @@ public class TacheDAOImpl implements ITacheDAO {
 
             if (exist) {
                 String sqlUpdate = """
-                    UPDATE tache
-                    SET titre = ?, type = ?, description = ?, priorite = ?, etat = ?, DateDebut = ?, duree = ?
-                    WHERE id = ?
-                    """;
+                        UPDATE tache
+                        SET titre = ?, type = ?, description = ?, priorite = ?, etat = ?, DateDebut = ?, duree = ?
+                        WHERE id = ?
+                        """;
                 try (PreparedStatement psUpdate = con.prepareStatement(sqlUpdate)) {
                     psUpdate.setString(1, tache.getNom());
                     psUpdate.setInt(2, (tache instanceof TacheMere) ? 0 : 1);
                     psUpdate.setString(3, tache.getDescription());
                     psUpdate.setInt(4, tache.getPriorite());
                     psUpdate.setString(5, tache.getEtat());
-
                     if (tache.getDateDebut() != null) {
                         psUpdate.setDate(6, Date.valueOf(tache.getDateDebut()));
                     } else {
@@ -165,31 +193,26 @@ public class TacheDAOImpl implements ITacheDAO {
                     }
                     psUpdate.setInt(7, tache.getDureeEstimee());
                     psUpdate.setInt(8, tache.getId());
-
                     psUpdate.executeUpdate();
                 }
             } else {
                 String sqlInsert = """
-                    INSERT INTO tache (titre, type, description, priorite, etat, DateDebut, duree)
-                    VALUES (?, ?, ?, ?, ?, ?, ?)
-                    """;
+                        INSERT INTO tache (titre, type, description, priorite, etat, DateDebut, duree)
+                        VALUES (?, ?, ?, ?, ?, ?, ?)
+                        """;
                 try (PreparedStatement psInsert = con.prepareStatement(sqlInsert, Statement.RETURN_GENERATED_KEYS)) {
                     psInsert.setString(1, tache.getNom());
                     psInsert.setInt(2, (tache instanceof TacheMere) ? 0 : 1);
                     psInsert.setString(3, tache.getDescription());
                     psInsert.setInt(4, tache.getPriorite());
                     psInsert.setString(5, tache.getEtat());
-
                     if (tache.getDateDebut() != null) {
                         psInsert.setDate(6, Date.valueOf(tache.getDateDebut()));
                     } else {
                         psInsert.setNull(6, Types.DATE);
                     }
-
                     psInsert.setInt(7, tache.getDureeEstimee());
-
                     psInsert.executeUpdate();
-
                     try (ResultSet generatedKeys = psInsert.getGeneratedKeys()) {
                         if (generatedKeys.next()) {
                             tache.setId(generatedKeys.getInt(1));
@@ -220,21 +243,12 @@ public class TacheDAOImpl implements ITacheDAO {
     }
 
     public void addDependanceDAO(int idF, int idM) {
-
         String sql = "INSERT INTO dependance (id_tache_mere, id_sous_tache) VALUES (?, ?)";
-        String sql2 = "UPDATE tache SET type = 1 WHERE id = ?";
         try (Connection con = DBConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setInt(1, idM);
             ps.setInt(2, idF);
             ps.executeUpdate();
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
-        try (Connection con = DBConnection.getConnection();
-             PreparedStatement ps2 = con.prepareStatement(sql2)) {
-            ps2.setInt(1, idF);
-            ps2.executeUpdate();
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
@@ -252,8 +266,8 @@ public class TacheDAOImpl implements ITacheDAO {
             stmt.setString(2, tache.getDescription());
             stmt.setInt(3, tache.getPriorite());
             stmt.setString(4, tache.getEtat());
-            if (tache.getDate() != null) {
-                stmt.setDate(5, Date.valueOf(tache.getDate()));
+            if (tache.getDateDebut() != null) {
+                stmt.setDate(5, Date.valueOf(tache.getDateDebut()));
             } else {
                 stmt.setNull(5, Types.DATE);
             }
@@ -267,14 +281,12 @@ public class TacheDAOImpl implements ITacheDAO {
         String sqlDeleteDep = "DELETE FROM dependance WHERE id_sous_tache = ?";
         String sqlDeleteCol = "DELETE FROM colonne2tache WHERE id_tache = ?";
         String sqlInsertCol = "INSERT INTO colonne2tache (id_colonne, id_tache) VALUES (?, ?)";
-        String sqlUpdateType = "UPDATE tache SET type = 0 WHERE id = ?";
 
         try (Connection con = DBConnection.getConnection()) {
             con.setAutoCommit(false);
             try (PreparedStatement psDep = con.prepareStatement(sqlDeleteDep);
                  PreparedStatement psDelCol = con.prepareStatement(sqlDeleteCol);
-                 PreparedStatement psInsCol = con.prepareStatement(sqlInsertCol);
-                 PreparedStatement psUpdateType = con.prepareStatement(sqlUpdateType)) {
+                 PreparedStatement psInsCol = con.prepareStatement(sqlInsertCol)) {
 
                 psDep.setInt(1, idTache);
                 psDep.executeUpdate();
@@ -286,40 +298,11 @@ public class TacheDAOImpl implements ITacheDAO {
                 psInsCol.setInt(2, idTache);
                 psInsCol.executeUpdate();
 
-                psUpdateType.setInt(1, idTache);
-                psUpdateType.executeUpdate();
-
                 con.commit();
             } catch (Exception e) {
                 con.rollback();
                 throw e;
             }
         }
-    }
-
-    @Override
-    public List<TacheAbstraite> getTachesArchivees(int idProjet) throws Exception {
-        String sql = """
-            SELECT t.* FROM tache t
-            JOIN colonne2tache c2t ON t.id = c2t.id_tache
-            JOIN colonne c ON c2t.id_colonne = c.id
-            JOIN projet2colonne p2c ON c.id = p2c.id_colonne
-            WHERE p2c.id_projet = ? AND t.etat = 'Archivée'
-        """;
-        List<TacheAbstraite> taches = new ArrayList<>();
-        try (Connection con = DBConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
-            ps.setInt(1, idProjet);
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) {
-                    TacheAbstraite t = construireTache(rs);
-                    if (t instanceof TacheMere) {
-                        chargerSousTaches((TacheMere) t);
-                    }
-                    taches.add(t);
-                }
-            }
-        }
-        return taches;
     }
 }
