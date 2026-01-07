@@ -9,10 +9,7 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.SnapshotParameters;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.control.ScrollPane;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
 import javafx.scene.input.*;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
@@ -357,16 +354,40 @@ public class VueKanban extends BorderPane implements Observateur, VueProjet {
                         TacheAbstraite fille = null;
                         Colonne currentCol = projet.getColonnes().get(colSourceIdx);
                         Colonne colCible = projet.getColonnes().get(indexColonneSource);
-                        for(TacheAbstraite task : currentCol.getTaches()) if(task.getId() == idFille) fille = task;
 
-                        if(fille != null && fille != t) {
+                        for (TacheAbstraite task : currentCol.getTaches()) {
+                            if (task.getId() == idFille) fille = task;
+                        }
+
+                        if (fille != null && fille != t) {
+                            // Vérifie les règles de dates avant d'ajouter la dépendance
+                            if (!service.verifierDropTache(projet, fille, mere)) {
+                                // Affiche un pop-up si non valide
+                                Alert alert = new Alert(Alert.AlertType.WARNING);
+                                alert.setTitle("Déplacement interdit");
+                                alert.setHeaderText("Règles de dates non respectées");
+                                alert.setContentText(
+                                        "Impossible de déplacer cette sous-tâche :\n" +
+                                                "• La sous-tâche ne peut pas commencer après sa tâche mère\n" +
+                                                "• La tâche mère ne peut pas commencer avant ses sous-tâches"
+                                );
+                                alert.showAndWait();
+
+                                event.setDropCompleted(false);
+                                event.consume();
+                                return;
+                            }
+
                             service.ajouterDependance(projet, mere, fille, currentCol, colCible);
                             event.setDropCompleted(true);
                         }
-                    } catch (Exception ex) { ex.printStackTrace(); }
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                    }
                 }
                 event.consume();
             });
+
 
             VBox childrenBox = new VBox(5);
             childrenBox.setPadding(new Insets(5, 0, 0, 15));

@@ -1,8 +1,6 @@
 package application.vue;
 
-import application.Etiquette;
-import application.TacheAbstraite;
-import application.TacheDecorateur;
+import application.*;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
@@ -17,9 +15,13 @@ import java.util.List;
 public class VueDescriptionTache extends Dialog<TacheAbstraite> {
 
     private TacheAbstraite tacheEnCoursEdition;
+    private Projet projet;
+    private ProjetService projetService;
 
-    public VueDescriptionTache(TacheAbstraite tache) {
+    public VueDescriptionTache(TacheAbstraite tache,  Projet projet, ProjetService projetService) {
         this.tacheEnCoursEdition = tache;
+        this.projet = projet;
+        this.projetService = projetService;
 
         this.setTitle("Détails de la tâche");
         this.setHeaderText("Modifier la tâche : " + tache.getNom());
@@ -109,10 +111,23 @@ public class VueDescriptionTache extends Dialog<TacheAbstraite> {
             if (dialogButton == loginButtonType) {
                 tacheEnCoursEdition.setNom(tfTitre.getText());
                 tacheEnCoursEdition.setDescription(taDesc.getText());
-                tacheEnCoursEdition.setEtat(cbEtat.getValue());
-                tacheEnCoursEdition.setNom(tfTitre.getText());
+
+                String nouvelEtat = cbEtat.getValue();
+                String etatActuel = tacheEnCoursEdition.getEtat();
+
+                if (!etatActuel.equals(nouvelEtat)) { // seulement si l'état a été modifié
+                    if (projetService.verifierEtatTacheMere(tacheEnCoursEdition)) {
+                        tacheEnCoursEdition.setEtat(nouvelEtat);
+                    } else {
+                        Alert alert = new Alert(Alert.AlertType.WARNING,
+                                "Impossible de modifier l'état : toutes les sous-tâches ne sont pas terminées.");
+                        alert.setHeaderText("État invalide");
+                        alert.showAndWait();
+                        
+                    }
+                }
+
                 tacheEnCoursEdition.setDescription(taDesc.getText());
-                tacheEnCoursEdition.setEtat(cbEtat.getValue());
 
                 String prioTexte = cbPriorite.getValue();
                 int prioInt = 2;
@@ -121,7 +136,16 @@ public class VueDescriptionTache extends Dialog<TacheAbstraite> {
 
                 tacheEnCoursEdition.setPriorite(prioInt);
 
-                tacheEnCoursEdition.setDateDebut(dpDate.getValue());
+                if (projetService.verifierReglesDates(projet, tacheEnCoursEdition, dpDate.getValue())){
+                    tacheEnCoursEdition.setDateDebut(dpDate.getValue());
+                }else{
+                    Alert alert = new Alert(Alert.AlertType.WARNING,
+                            "La date ne respecte pas les règles du projet :\n" +
+                                    "• Une sous-tâche ne peut pas commencer après sa tâche mère\n" +
+                                    "• Une tâche mère ne peut pas commencer avant ses sous-tâches");
+                    alert.setHeaderText("Date invalide");
+                    alert.showAndWait();
+                }
 
                 try {
                     String dureeTxt = tfDuree.getText();

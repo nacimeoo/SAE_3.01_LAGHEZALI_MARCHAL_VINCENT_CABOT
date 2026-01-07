@@ -4,6 +4,8 @@ import application.DAO.ColonneDAOImpl;
 import application.DAO.EtiquetteDAOImpl;
 import application.DAO.ProjetDAOImpl;
 import application.DAO.TacheDAOImpl;
+
+import java.time.LocalDate;
 import java.util.Date;
 import java.util.List;
 
@@ -266,7 +268,62 @@ public class ProjetService {
             return null;
         }
     }
+    public boolean verifierEtatTacheMere(TacheAbstraite tache) {
+        if (tache instanceof TacheMere) {
+            TacheMere mere = (TacheMere) tache;
 
+            for (TacheAbstraite sousTache : mere.getSousTaches()) {
+                if (!"Terminer".equalsIgnoreCase(sousTache.getEtat())) {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        return true;
+    }
+
+    public boolean verifierReglesDates(Projet projet, TacheAbstraite tache, LocalDate nouvelleDate) {
+        boolean reponse = true;
+
+        if (tache instanceof TacheAbstraite) {
+            TacheAbstraite st = tache;
+            TacheMere mere = trouverParent(projet, st);
+
+            System.out.println("Sous tache : " + tache);
+            System.out.println("tache mere : " + mere);
+
+            if (mere != null && mere.getDateDebut() != null) {
+                if (nouvelleDate.isAfter(mere.getDateDebut())) {
+                    reponse = false;
+                    throw new IllegalStateException(
+                            "La sous-tâche ne peut pas commencer après la tâche mère."
+                    );
+                }
+            }
+        }
+        return reponse;
+    }
+
+    public boolean verifierDropTache(Projet projet, TacheAbstraite sousTache, TacheMere tacheMere) {
+        if (sousTache.getDateDebut() != null && tacheMere.getDateDebut() != null) {
+            if (sousTache.getDateDebut().isAfter(tacheMere.getDateDebut())) {
+                return false;
+            }
+        }
+
+
+        for (TacheAbstraite st : tacheMere.getSousTaches()) {
+            if (st.getDateDebut() != null && tacheMere.getDateDebut() != null) {
+                if (st.getDateDebut().isAfter(tacheMere.getDateDebut())) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
 
 
 }
