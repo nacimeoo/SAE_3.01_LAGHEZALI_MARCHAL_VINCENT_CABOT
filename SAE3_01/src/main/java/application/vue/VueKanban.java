@@ -77,6 +77,10 @@ public class VueKanban extends BorderPane implements Observateur, VueProjet {
         btnListe.setMaxWidth(Double.MAX_VALUE);
         btnListe.setStyle("-fx-background-color: #59a7ff; -fx-border-color: #000000;");
 
+        Button btnGantt = new Button("Vue Gantt");
+        btnGantt.setMaxWidth(Double.MAX_VALUE);
+        btnGantt.setStyle("-fx-background-color: #a1d1f1; -fx-border-color: #000000;");
+
         Label lblAdd = new Label("Ajouter Tache");
         tfTask = new TextField();
         tfTask.setPromptText("Nom de la tâche...");
@@ -102,7 +106,7 @@ public class VueKanban extends BorderPane implements Observateur, VueProjet {
         ControleurSupprimerColonne ctrlSupprCol = new ControleurSupprimerColonne(projet, service, this);
         btnDeleteCol.setOnAction(ctrlSupprCol);
 
-        sidebar.getChildren().addAll(addTacheBox, btnDelete, btnDeleteCol, btnListe);
+        sidebar.getChildren().addAll(addTacheBox, btnDelete, btnDeleteCol, btnListe, btnGantt);
         this.setRight(sidebar);
     }
 
@@ -196,26 +200,24 @@ public class VueKanban extends BorderPane implements Observateur, VueProjet {
             if (db.hasString()) {
                 try {
                     String[] parts = db.getString().split(":");
-                    int indexColonneSource = Integer.parseInt(parts[0]);
+                    int indexColSource = Integer.parseInt(parts[0]);
                     int idTache = Integer.parseInt(parts[1]);
 
+                    TacheAbstraite task = trouverTacheParId(idTache);
 
-                    TacheAbstraite tacheConcernee = trouverTacheParId(idTache);
+                    if (task != null) {
+                        Colonne colSource = projet.getColonnes().get(indexColSource);
+                        boolean estRacine = colSource.getTaches().stream()
+                                .anyMatch(t -> t.getId() == idTache);
 
-                    if (tacheConcernee != null) {
-                        if (indexColonneSource != indexColonne) {
-                            Colonne colSource = projet.getColonnes().get(indexColonneSource);
-                            service.deplacerTache(projet, colSource, c, tacheConcernee);
-                            success = true;
-                        }
-                        else {
-                            boolean estRacine = c.getTaches().stream()
-                                    .anyMatch(t -> t.getId() == idTache);
-
-                            if (!estRacine) {
-                                service.detacherSousTache(projet, tacheConcernee, c);
+                        if (estRacine) {
+                            if (indexColSource != indexColonne) {
+                                service.deplacerTache(projet, colSource, c, task);
                                 success = true;
                             }
+                        } else {
+                            service.detacherSousTache(projet, task, c);
+                            success = true;
                         }
                     }
                 } catch (Exception ex) {
@@ -311,6 +313,7 @@ public class VueKanban extends BorderPane implements Observateur, VueProjet {
                 }
                 tacheSelectionnee = t;
                 vueTacheSelectionnee = cardContainer;
+                colonneSelectionnee = projet.getColonnes().get(indexColonneSource);
                 cardContainer.setStyle("-fx-border-color: blue; -fx-border-width: 2; -fx-background-color: #e6f7ff; -fx-background-radius: 5; -fx-border-radius: 5;");
             }
         });

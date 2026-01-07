@@ -3,7 +3,6 @@ package application.vue;
 import application.*;
 import application.controller.ControleurAjouterTache;
 import application.controller.ControleurEditerTache;
-import application.controller.ControleurRetourDashboard;
 import application.controller.ControleurSupprimerTache;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -19,13 +18,9 @@ import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
-import java.time.DayOfWeek;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
-
+import java.time.format.TextStyle;
+import java.util.*;
 
 public class VueListe extends BorderPane implements Observateur, VueProjet {
     private Projet projet;
@@ -39,7 +34,7 @@ public class VueListe extends BorderPane implements Observateur, VueProjet {
     private Colonne colonneSelectionnee = null;
     private VBox vueColonneSelectionnee = null;
 
-    public VueListe(Projet projet,  ProjetService projetService) {
+    public VueListe(Projet projet, ProjetService projetService) {
         this.projet = projet;
         this.service = projetService;
         this.projet.enregistrerObservateur(this);
@@ -51,7 +46,6 @@ public class VueListe extends BorderPane implements Observateur, VueProjet {
         this.setPadding(new Insets(15));
 
         // Header
-
         HBox header = new HBox(20);
         header.setAlignment(Pos.CENTER_LEFT);
         header.setPadding(new Insets(0,0,20,0));
@@ -60,9 +54,8 @@ public class VueListe extends BorderPane implements Observateur, VueProjet {
         Label titreLabel = new Label(projet.getNom());
         titreLabel.setFont(Font.font("Arial", FontWeight.BOLD, 24));
 
-        header.getChildren().addAll(backButton,titreLabel);
+        header.getChildren().addAll(backButton, titreLabel);
         this.setTop(header);
-
 
         boardContainer = new VBox(15);
         boardContainer.setPadding(new Insets(10));
@@ -70,6 +63,7 @@ public class VueListe extends BorderPane implements Observateur, VueProjet {
         scrollPane.setFitToHeight(true);
         this.setCenter(scrollPane);
 
+        // Sidebar
         VBox sidebar = new VBox(20);
         sidebar.setPadding(new Insets(0, 0, 0, 15));
         sidebar.setPrefWidth(200);
@@ -99,25 +93,24 @@ public class VueListe extends BorderPane implements Observateur, VueProjet {
 
         Button btnKanban = new Button("Vue Kanban");
         btnKanban.setMaxWidth(Double.MAX_VALUE);
-        btnKanban.setStyle("-fx-background-color: #59a7ff; -fx-border-color: #000000;");
+        btnKanban.setStyle("-fx-background-color: #a964d8; -fx-border-color: #000000;");
 
-        sidebar.getChildren().addAll(addTacheBox, btnDelete,  btnKanban);
+        Button btnGantt = new Button("Vue Gantt");
+        btnGantt.setMaxWidth(Double.MAX_VALUE);
+        btnGantt.setStyle("-fx-background-color: #a1d1f1; -fx-border-color: #000000;");
+
+        sidebar.getChildren().addAll(addTacheBox, btnDelete, btnKanban, btnGantt);
         this.setRight(sidebar);
     }
 
     private void rafraichirVue() {
         boardContainer.getChildren().clear();
-
-        tacheSelectionnee = null;
-        vueTacheSelectionnee = null;
-        colonneSelectionnee = null;
-        vueColonneSelectionnee = null;
+        resetSelection();
 
         Map<LocalDate, List<TacheAbstraite>> tachesParDate = new TreeMap<>();
 
         for (Colonne colonne : projet.getColonnes()) {
             for (TacheAbstraite t : colonne.getTaches()) {
-                // Récupérer toutes les tâches (racines + sous-tâches) avec leurs étiquettes
                 collecterTachesAvecDate(t, tachesParDate);
             }
         }
@@ -126,28 +119,20 @@ public class VueListe extends BorderPane implements Observateur, VueProjet {
             VBox col = creerColonneDate(date, tachesParDate.get(date));
             boardContainer.getChildren().add(col);
         }
-
-        System.out.println("Nb taches projet = " + projet.getAllTaches().size());
-        for (TacheAbstraite t : projet.getAllTaches()) {
-            System.out.println(t.getNom() + " -> " + t.getDate());
-        }
     }
 
     private void collecterTachesAvecDate(TacheAbstraite tache, Map<LocalDate, List<TacheAbstraite>> map) {
         if (tache == null) return;
 
-        // Ajouter la tâche actuelle si elle a une date
         if (tache.getDate() != null) {
             map.computeIfAbsent(tache.getDate(), d -> new ArrayList<>()).add(tache);
         }
 
-        // Extraire le core pour vérifier s'il y a des sous-tâches
         TacheAbstraite core = tache;
         while (core instanceof TacheDecorateur) {
             core = ((TacheDecorateur) core).getTacheDecoree();
         }
 
-        // Si c'est une TacheMere, traiter récursivement les sous-tâches
         if (core instanceof TacheMere) {
             TacheMere mere = (TacheMere) core;
             for (TacheAbstraite sousTache : mere.getSousTaches()) {
@@ -156,17 +141,19 @@ public class VueListe extends BorderPane implements Observateur, VueProjet {
         }
     }
 
-
     private VBox creerColonneDate(LocalDate date, List<TacheAbstraite> taches) {
-        VBox col = new VBox(10);
+        VBox col = new VBox(0); // VGap à 0 pour coller l'entête à la première ligne
         col.setPadding(new Insets(10));
         col.setBorder(new Border(new BorderStroke(
                 Color.BLACK, BorderStrokeStyle.SOLID, CornerRadii.EMPTY, new BorderWidths(1)
         )));
 
-        String titre = date.getDayOfWeek() + " " + date;
+        String jour = date.getDayOfWeek().getDisplayName(TextStyle.FULL, Locale.FRENCH);
+        jour = jour.substring(0,1).toUpperCase() + jour.substring(1);
+        String titre = jour  + " " + date;
         Label lblDate = new Label(titre);
         lblDate.setFont(Font.font("Arial", FontWeight.BOLD, 16));
+        lblDate.setPadding(new Insets(0, 0, 10, 0));
 
         col.getChildren().add(lblDate);
 
@@ -183,10 +170,14 @@ public class VueListe extends BorderPane implements Observateur, VueProjet {
             colonneSelectionnee = new Colonne(date.toString());
         });
 
+        // CORRECTION : On affiche l'entête seulement pour la première tâche
+        boolean isFirst = true;
         for (TacheAbstraite t : taches) {
-            col.getChildren().add(creerCarteTache(t, true));
+            col.getChildren().add(creerCarteTache(t, isFirst));
+            isFirst = false;
         }
 
+        // Drag & Drop Handling
         col.setOnDragOver(event -> {
             if (event.getGestureSource() != col && event.getDragboard().hasString()) {
                 event.acceptTransferModes(TransferMode.MOVE);
@@ -197,28 +188,21 @@ public class VueListe extends BorderPane implements Observateur, VueProjet {
         col.setOnDragDropped(event -> {
             Dragboard db = event.getDragboard();
             boolean success = false;
-
             if (db.hasString()) {
-                String idStr = db.getString();
                 try {
+                    String idStr = db.getString();
+                    // On suppose que getTacheById prend un String ou int selon ton implémentation
                     TacheAbstraite t = projet.getTacheById(idStr);
                     if (t != null) {
-
                         t.setDateDebut(date);
-
                         service.modifierTache(projet, t);
-
                         projet.notifierObservateurs();
-
                         success = true;
                     }
-                } catch (NumberFormatException e) {
-                    System.err.println("ID de tâche invalide pour le drag & drop : " + idStr);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
             }
-
             event.setDropCompleted(success);
             event.consume();
         });
@@ -227,118 +211,95 @@ public class VueListe extends BorderPane implements Observateur, VueProjet {
     }
 
     private VBox creerCarteTache(TacheAbstraite t, boolean afficherEntete) {
+        VBox bloc = new VBox(0);
+        bloc.setMaxWidth(Region.USE_PREF_SIZE);
 
-        VBox bloc = new VBox(2);
+        // CORRECTION ALIGNEMENT : Largeur harmonisée à 200px pour le nom
+        double widthNom = 200;
+        double widthPrio = 70;
+        double widthEtat = 90;
+        double widthDuree = 70;
+        double widthDesc = 260;
 
         if (afficherEntete) {
-            HBox entete = new HBox(15);
-            entete.setPadding(new Insets(8));
+            HBox entete = new HBox(6);
+            entete.setPadding(new Insets(4, 6, 4, 6));
             entete.setAlignment(Pos.CENTER_LEFT);
-            entete.setStyle("""
-            -fx-background-color: #f0f0f0;
-            -fx-border-color: black;
-            -fx-border-width: 0 0 2 0;
-            -fx-font-weight: bold;
-        """);
+            entete.setMaxWidth(Region.USE_PREF_SIZE);
+            entete.setStyle("-fx-background-color: #f0f0f0; -fx-border-color: black; -fx-border-width: 0 0 1 0; -fx-font-weight: bold; -fx-font-size: 12px;");
 
-            Label hNom = new Label("Nom");
-            hNom.setPrefWidth(180);
+            Label hNom = new Label("Nom"); hNom.setPrefWidth(widthNom);
+            Label hPriorite = new Label("Priorité"); hPriorite.setPrefWidth(widthPrio);
+            Label hEtat = new Label("État"); hEtat.setPrefWidth(widthEtat);
+            Label hDuree = new Label("Durée"); hDuree.setPrefWidth(widthDuree);
+            Label hDescription = new Label("Description"); hDescription.setPrefWidth(widthDesc);
 
-
-            Label hPriorite = new Label("Priorité");
-            hPriorite.setPrefWidth(80);
-
-            Label hEtat = new Label("État");
-            hEtat.setPrefWidth(100);
-
-            Label hDuree = new Label("Durée");
-            hDuree.setPrefWidth(80);
-
-            Label hDescription = new Label("Description");
-            hDescription.setPrefWidth(300);
-
-            entete.getChildren().addAll(
-                    hNom, hPriorite, hEtat, hDuree, hDescription
-            );
-
+            entete.getChildren().addAll(hNom, hPriorite, hEtat, hDuree, hDescription);
             bloc.getChildren().add(entete);
         }
 
-        HBox ligne = new HBox(15);
-        ligne.setPadding(new Insets(8));
+        HBox ligne = new HBox(6);
+        ligne.setPadding(new Insets(4, 6, 4, 6));
         ligne.setAlignment(Pos.CENTER_LEFT);
-        ligne.setStyle("-fx-border-color: black; -fx-background-color: white;");
+        ligne.setMaxWidth(Region.USE_PREF_SIZE);
+        ligne.setStyle("-fx-border-color: black; -fx-background-color: white; -fx-font-size: 12px;");
+        if (!afficherEntete) {
+            // Évite la double bordure si les lignes sont collées
+            ligne.setStyle("-fx-border-color: black; -fx-border-width: 1 1 0 1; -fx-background-color: white; -fx-font-size: 12px;");
+        }
 
+        // Zone Nom + Etiquettes
         VBox h = new VBox();
         Label lblNom = new Label(t.getNom());
-        lblNom.setPrefWidth(180);
-
+        lblNom.setPrefWidth(widthNom); // Utilise la largeur corrigée
 
         FlowPane zoneEtiquettes = new FlowPane();
         zoneEtiquettes.setHgap(5);
         zoneEtiquettes.setVgap(3);
-        zoneEtiquettes.setPrefWidth(200);
-        zoneEtiquettes.setMaxWidth(200);
+        zoneEtiquettes.setPrefWidth(widthNom); // Alignement avec le titre
+        zoneEtiquettes.setMaxWidth(widthNom);
         zoneEtiquettes.setAlignment(Pos.CENTER_LEFT);
 
         TacheAbstraite current = t;
         while (current instanceof TacheDecorateur) {
             if (current instanceof Etiquette) {
                 Etiquette et = (Etiquette) current;
-
                 Label lblEtiquette = new Label(et.getLibelle());
-
                 String hexColor = et.getCouleur().startsWith("0x") ? et.getCouleur().replace("0x", "#") : et.getCouleur();
 
-                lblEtiquette.setStyle(
-                        "-fx-background-color: " + hexColor + ";" +
-                                "-fx-text-fill: white;" +
-                                "-fx-padding: 2 5;" +
-                                "-fx-background-radius: 3;" +
-                                "-fx-font-size: 10px;" +
-                                "-fx-font-weight: bold;"
-                );
-
+                lblEtiquette.setStyle("-fx-background-color: " + hexColor + "; -fx-text-fill: white; -fx-padding: 2 5; -fx-background-radius: 3; -fx-font-size: 10px; -fx-font-weight: bold;");
                 zoneEtiquettes.getChildren().add(lblEtiquette);
             }
             current = ((TacheDecorateur) current).getTacheDecoree();
         }
-
         h.getChildren().addAll(lblNom, zoneEtiquettes);
 
-        Label lblPriorite = new Label(String.valueOf(t.getPriorite()));
-        lblPriorite.setPrefWidth(80);
+        Label lblPriorite = new Label(t.getPriorite() >= 3 ? "Forte" : t.getPriorite() == 1 ? "Faible" : "Moyenne");
+        lblPriorite.setPrefWidth(widthPrio);
 
         Label lblEtat = new Label(t.getEtat());
-        lblEtat.setPrefWidth(100);
-
-        System.out.println("L'état est : " + t.getEtat());
+        lblEtat.setPrefWidth(widthEtat);
 
         Label lblDuree = new Label(t.getDureeEstimee() + " j");
-        lblDuree.setPrefWidth(80);
+        lblDuree.setPrefWidth(widthDuree);
 
         Label lblDescription = new Label(t.getDescription());
-        lblDescription.setPrefWidth(300);
+        lblDescription.setPrefWidth(widthDesc);
 
-        ligne.getChildren().addAll(
-                h,
-                lblPriorite,
-                lblEtat,
-                lblDuree,
-                lblDescription
-        );
+        ligne.getChildren().addAll(h, lblPriorite, lblEtat, lblDuree, lblDescription);
 
+        // Interaction
         ligne.setOnMouseClicked(e -> {
             e.consume();
             if (e.getClickCount() == 2) {
                 new ControleurEditerTache(projet, service, t).handle(e);
             } else {
                 if (vueTacheSelectionnee != null) {
-                    vueTacheSelectionnee.setStyle("-fx-border-color: black; -fx-background-color: white;");
+                    vueTacheSelectionnee.setStyle("-fx-border-color: black; -fx-background-color: white; -fx-font-size: 12px;");
                 }
                 tacheSelectionnee = t;
                 vueTacheSelectionnee = ligne;
-                ligne.setStyle("-fx-border-color: blue; -fx-border-width: 2; -fx-background-color: #e6f7ff;");
+                ligne.setStyle("-fx-border-color: blue; -fx-border-width: 2; -fx-background-color: #e6f7ff; -fx-font-size: 12px;");
             }
         });
 
@@ -354,9 +315,6 @@ public class VueListe extends BorderPane implements Observateur, VueProjet {
         bloc.getChildren().add(ligne);
         return bloc;
     }
-
-
-
 
     public TacheAbstraite getTacheSelectionnee() { return tacheSelectionnee; }
     public Colonne getColonneSelectionnee() { return this.colonneSelectionnee; }
@@ -374,8 +332,6 @@ public class VueListe extends BorderPane implements Observateur, VueProjet {
         }
         this.vueColonneSelectionnee = null;
     }
-
-
 
     @Override
     public void actualiser(Sujet s) {
