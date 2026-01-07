@@ -432,7 +432,7 @@ public class ProjetService {
         return archives;
     }
 
-    private TacheAbstraite extraireCore(TacheAbstraite tache) {
+    public TacheAbstraite extraireCore(TacheAbstraite tache) {
         TacheAbstraite core = tache;
         while (core instanceof TacheDecorateur) {
             core = ((TacheDecorateur) core).getTacheDecoree();
@@ -476,6 +476,52 @@ public class ProjetService {
             } catch (Exception e) {
                 e.printStackTrace();
             }
+        }
+    }
+
+    public void reassignerTache(Projet projet, TacheAbstraite source, TacheAbstraite cible) {
+        if (source.getId() == cible.getId()) return;
+        TacheAbstraite sourceCore = extraireCore(source);
+        TacheAbstraite cibleCore = extraireCore(cible);
+        try (java.sql.Connection con = application.DAO.DBConnection.getConnection()) {
+            con.setAutoCommit(false);
+
+            try {
+                try (java.sql.PreparedStatement psDelDep = con.prepareStatement("DELETE FROM dependance WHERE id_sous_tache = ?")) {
+                    psDelDep.setInt(1, sourceCore.getId());
+                    psDelDep.executeUpdate();
+                }
+
+                try (java.sql.PreparedStatement psDelCol = con.prepareStatement("DELETE FROM colonne2tache WHERE id_tache = ?")) {
+                    psDelCol.setInt(1, sourceCore.getId());
+                    psDelCol.executeUpdate();
+                }
+                try (java.sql.PreparedStatement psUpdateType = con.prepareStatement("UPDATE tache SET type = 0 WHERE id = ?")) {
+                    psUpdateType.setInt(1, cibleCore.getId());
+                    psUpdateType.executeUpdate();
+                }
+                try (java.sql.PreparedStatement psInsertDep = con.prepareStatement("INSERT INTO dependance (id_tache_mere, id_sous_tache) VALUES (?, ?)")) {
+                    psInsertDep.setInt(1, cibleCore.getId());
+                    psInsertDep.setInt(2, sourceCore.getId());
+                    psInsertDep.executeUpdate();
+                }
+                con.commit();
+                Projet projetAJour = chargerProjetComplet(projet.getId());
+
+                if (projetAJour != null) {
+                    // On remplace le contenu des colonnes actuelles par les nouvelles
+                    projet.getColonnes().clear();
+                    projet.getColonnes().addAll(projetAJour.getColonnes());
+                }
+                projet.notifierObservateurs();
+
+            } catch (Exception ex) {
+                con.rollback();
+                ex.printStackTrace();
+                throw new RuntimeException("Erreur lors du déplacement de la tâche : " + ex.getMessage());
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 

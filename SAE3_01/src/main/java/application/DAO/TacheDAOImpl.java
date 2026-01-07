@@ -242,12 +242,31 @@ public class TacheDAOImpl implements ITacheDAO {
     }
 
     public void addDependanceDAO(int idF, int idM) {
-        String sql = "INSERT INTO dependance (id_tache_mere, id_sous_tache) VALUES (?, ?)";
-        try (Connection con = DBConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
-            ps.setInt(1, idM);
-            ps.setInt(2, idF);
-            ps.executeUpdate();
+        String sqlInsertDep = "INSERT INTO dependance (id_tache_mere, id_sous_tache) VALUES (?, ?)";
+        String sqlUpdateChild = "UPDATE tache SET type = 1 WHERE id = ?";
+        String sqlUpdateParent = "UPDATE tache SET type = 0 WHERE id = ?";
+
+        try (Connection con = DBConnection.getConnection()) {
+            con.setAutoCommit(false);
+            try (PreparedStatement psDep = con.prepareStatement(sqlInsertDep);
+                 PreparedStatement psChild = con.prepareStatement(sqlUpdateChild);
+                 PreparedStatement psParent = con.prepareStatement(sqlUpdateParent)) {
+
+                psDep.setInt(1, idM);
+                psDep.setInt(2, idF);
+                psDep.executeUpdate();
+
+                psChild.setInt(1, idF);
+                psChild.executeUpdate();
+
+                psParent.setInt(1, idM);
+                psParent.executeUpdate();
+
+                con.commit();
+            } catch (Exception e) {
+                con.rollback();
+                throw new RuntimeException(e);
+            }
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
@@ -280,12 +299,14 @@ public class TacheDAOImpl implements ITacheDAO {
         String sqlDeleteDep = "DELETE FROM dependance WHERE id_sous_tache = ?";
         String sqlDeleteCol = "DELETE FROM colonne2tache WHERE id_tache = ?";
         String sqlInsertCol = "INSERT INTO colonne2tache (id_colonne, id_tache) VALUES (?, ?)";
+        String sqlUpdateType = "UPDATE tache SET type = 0 WHERE id = ?";
 
         try (Connection con = DBConnection.getConnection()) {
             con.setAutoCommit(false);
             try (PreparedStatement psDep = con.prepareStatement(sqlDeleteDep);
                  PreparedStatement psDelCol = con.prepareStatement(sqlDeleteCol);
-                 PreparedStatement psInsCol = con.prepareStatement(sqlInsertCol)) {
+                 PreparedStatement psInsCol = con.prepareStatement(sqlInsertCol);
+                 PreparedStatement psUpdateType = con.prepareStatement(sqlUpdateType)) {
 
                 psDep.setInt(1, idTache);
                 psDep.executeUpdate();
@@ -296,6 +317,9 @@ public class TacheDAOImpl implements ITacheDAO {
                 psInsCol.setInt(1, idColonne);
                 psInsCol.setInt(2, idTache);
                 psInsCol.executeUpdate();
+
+                psUpdateType.setInt(1, idTache);
+                psUpdateType.executeUpdate();
 
                 con.commit();
             } catch (Exception e) {
