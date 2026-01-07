@@ -70,7 +70,6 @@ public class TacheDAOImpl implements ITacheDAO {
             ps.setInt(1, mere.getId());
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    // Appel récursif avec la MÊME connexion
                     TacheAbstraite enfant = getTacheByIdInternal(rs.getInt("id_sous_tache"), con);
                     if (enfant != null) {
                         mere.ajouterDependance(enfant);
