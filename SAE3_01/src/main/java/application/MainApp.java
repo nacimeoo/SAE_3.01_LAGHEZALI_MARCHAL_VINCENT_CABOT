@@ -1,10 +1,7 @@
 package application;
 
 import application.controller.ControleurRetourDashboard;
-import application.vue.VueDashboard;
-import application.vue.VueGantt;
-import application.vue.VueKanban;
-import application.vue.VueListe;
+import application.vue.*;
 import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
@@ -58,6 +55,9 @@ public class MainApp extends Application {
                             b.setOnAction(e -> afficherListe(projetComplet));
                         }else if ("Vue Gantt".equals(b.getText())) {
                             b.setOnAction(e -> afficherGantt(projetComplet));
+                        }
+                        else if ("Voir Archives".equals(b.getText())) {
+                            b.setOnAction(e -> afficherArchives(projetComplet));
                         }
                     }
                 }
@@ -142,6 +142,8 @@ public class MainApp extends Application {
                             b.setOnAction(e -> afficherKanban(projetComplet));
                         }else if ("Vue Liste".equals(b.getText())) {
                             b.setOnAction(e -> afficherListe(projetComplet));
+                        } else if ("Voir Archives".equals(b.getText())) {
+                            b.setOnAction(e -> afficherArchives(projetComplet));
                         }
                     }
                 }
@@ -151,6 +153,29 @@ public class MainApp extends Application {
             primaryStage.setTitle("FRIDAY - Liste " + projetComplet.getNom());
         }
     }
+
+    public void afficherArchives(Projet projetSelectionne) {
+        Projet projetComplet = projetService.chargerProjetComplet(projetSelectionne.getId());
+        if (projetComplet != null) {
+            VueArchive vueArchives = new VueArchive(projetComplet, projetService);
+
+            if (vueArchives.getTop() instanceof HBox) {
+                HBox header = (HBox) vueArchives.getTop();
+                for (javafx.scene.Node n : header.getChildren()) {
+                    if (n instanceof Button b) {
+                        if ("<- Retour Kanban".equals(b.getText())) {
+                            b.setOnAction(e -> afficherKanban(projetComplet));
+                        }
+                    }
+                }
+            }
+
+            Scene scene = new Scene(vueArchives, 1000, 600);
+            primaryStage.setScene(scene);
+            primaryStage.setTitle("FRIDAY - Archives " + projetComplet.getNom());
+        }
+    }
+
 
     public static void main(String[] args) {
         launch(args);

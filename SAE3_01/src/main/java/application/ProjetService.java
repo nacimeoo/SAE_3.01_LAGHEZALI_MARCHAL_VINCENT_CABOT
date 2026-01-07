@@ -158,26 +158,51 @@ public class ProjetService {
             courant = ((TacheDecorateur) courant).getTacheDecoree();
         }
 
-        boolean remplace = false;
+        boolean trouve = false;
         for (Colonne col : projet.getColonnes()) {
             List<TacheAbstraite> taches = col.getTaches();
             for (int i = 0; i < taches.size(); i++) {
-                TacheAbstraite t = taches.get(i);
-
-                TacheAbstraite tRacineDansListe = t;
-                while (tRacineDansListe instanceof TacheDecorateur) {
-                    tRacineDansListe = ((TacheDecorateur) tRacineDansListe).getTacheDecoree();
-                }
-
-                if (tRacineDansListe.getId() == tacheRacine.getId()) {
-                    taches.set(i, tacheModifiee);
-                    remplace = true;
+                if (remplacerTacheRecursif(taches, i, tacheModifiee)) {
+                    trouve = true;
                     break;
                 }
             }
-            if (remplace) break;
+            if (trouve) break;
         }
         projet.notifierObservateurs();
+    }
+
+    private boolean remplacerTacheRecursif(List<TacheAbstraite> liste, int index, TacheAbstraite tacheModifiee) {
+        TacheAbstraite tActuelle = liste.get(index);
+        int idActuel = tActuelle.getId();
+        TacheAbstraite temp = tActuelle;
+        while(temp instanceof TacheDecorateur) {
+            idActuel = ((TacheDecorateur) temp).getTacheDecoree().getId();
+            temp = ((TacheDecorateur) temp).getTacheDecoree();
+        }
+        int idModif = tacheModifiee.getId();
+        TacheAbstraite tempM = tacheModifiee;
+        while(tempM instanceof TacheDecorateur) {
+            idModif = ((TacheDecorateur) tempM).getTacheDecoree().getId();
+            tempM = ((TacheDecorateur) tempM).getTacheDecoree();
+        }
+        if (idActuel == idModif) {
+            liste.set(index, tacheModifiee);
+            return true;
+        }
+        TacheAbstraite core = tActuelle;
+        while (core instanceof TacheDecorateur) {
+            core = ((TacheDecorateur) core).getTacheDecoree();
+        }
+        if (core instanceof TacheMere) {
+            TacheMere mere = (TacheMere) core;
+            for (int i = 0; i < mere.getSousTaches().size(); i++) {
+                if (remplacerTacheRecursif(mere.getSousTaches(), i, tacheModifiee)) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     public boolean ajouterDependance(Projet projet, TacheMere mere, TacheAbstraite fille, Colonne col, Colonne colCible) throws Exception {

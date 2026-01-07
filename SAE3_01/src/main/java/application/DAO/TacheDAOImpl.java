@@ -72,7 +72,7 @@ public class TacheDAOImpl implements ITacheDAO {
 
     @Override
     public List<TacheAbstraite> getAllTaches() throws Exception {
-        String sql = "SELECT * FROM tache where etat <> 'Archivee'";
+        String sql = "SELECT * FROM tache where etat <> 'Archivée'";
         List<TacheAbstraite> taches = new ArrayList<>();
         try (Connection con = DBConnection.getConnection();
              Statement stmt = con.createStatement();
@@ -90,7 +90,7 @@ public class TacheDAOImpl implements ITacheDAO {
     }
 
     public List<TacheAbstraite> getAllTachesArchivee() throws Exception {
-        String sql = "SELECT * FROM tache where etat == 'Archivee'";
+        String sql = "SELECT * FROM tache where etat == 'Archivée'";
         List<TacheAbstraite> taches = new ArrayList<>();
         try (Connection con = DBConnection.getConnection();
              Statement stmt = con.createStatement();
@@ -114,7 +114,7 @@ public class TacheDAOImpl implements ITacheDAO {
             FROM tache t
             INNER JOIN colonne2tache c2t ON c2t.id_tache = t.id
             WHERE c2t.id_colonne = ?
-            AND t.id NOT IN (SELECT id_sous_tache FROM dependance) and t.etat <> 'Archivee'
+            AND t.id NOT IN (SELECT id_sous_tache FROM dependance) and t.etat <> 'Archivée'
             """;
         List<TacheAbstraite> taches = new ArrayList<>();
         try (Connection con = DBConnection.getConnection();

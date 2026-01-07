@@ -38,7 +38,7 @@ public class VueDescriptionTache extends Dialog<TacheAbstraite> {
         taDesc.setPrefRowCount(3);
 
         ComboBox<String> cbEtat = new ComboBox<>();
-        cbEtat.getItems().addAll("A faire", "En cours", "Terminer", "En attente");
+        cbEtat.getItems().addAll("A faire", "En cours", "Terminer", "En attente", "Archivée");
         cbEtat.setValue(tache.getEtat() != null ? tache.getEtat() : "A faire");
 
         ComboBox<String> cbPriorite = new ComboBox<>();
