@@ -25,17 +25,17 @@ public class VueDescriptionTache extends Dialog<TacheAbstraite> {
     private Projet projet;
     private ProjetService projetService;
     private EtiquetteDAOImpl etiquetteDAO = new EtiquetteDAOImpl();
-    
+
 
     public VueDescriptionTache(TacheAbstraite tache,  Projet projet, ProjetService projetService) {
         this.tacheEnCoursEdition = tache;
         this.projet = projet;
         this.projetService = projetService;
-    }
+    
 
 
 
-    public VueDescriptionTache(TacheAbstraite tache, Projet  projet) {
+
         this.tacheEnCoursEdition = tache;
         this.projet = projet;
 
