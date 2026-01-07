@@ -274,6 +274,8 @@ public class VueKanban extends BorderPane implements Observateur, VueProjet {
         lblNom.setFont(Font.font("Arial", FontWeight.BOLD, 13));
         cardHeader.getChildren().add(lblNom);
 
+        HBox hb = new HBox();
+
         TacheAbstraite current = t;
         while (current instanceof TacheDecorateur) {
             if (current instanceof Etiquette) {
@@ -292,10 +294,14 @@ public class VueKanban extends BorderPane implements Observateur, VueProjet {
                                 "-fx-font-weight: bold;"
                 );
 
-                cardHeader.getChildren().add(lblEtiquette);
+                hb.getChildren().add(lblEtiquette);
+                hb.setSpacing(5.0);
+
             }
             current = ((TacheDecorateur) current).getTacheDecoree();
         }
+
+        cardHeader.getChildren().add(hb);
 
         cardContainer.getChildren().add(cardHeader);
 

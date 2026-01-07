@@ -3,6 +3,7 @@ package application.vue;
 import application.*;
 import application.DAO.EtiquetteDAOImpl;
 import application.Etiquette;
+import application.Projet;
 import application.TacheAbstraite;
 import application.TacheDecorateur;
 import javafx.geometry.Insets;
@@ -14,7 +15,9 @@ import javafx.scene.layout.HBox;
 import javafx.scene.paint.Color;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class VueDescriptionTache extends Dialog<TacheAbstraite> {
 
@@ -22,11 +25,20 @@ public class VueDescriptionTache extends Dialog<TacheAbstraite> {
     private Projet projet;
     private ProjetService projetService;
     private EtiquetteDAOImpl etiquetteDAO = new EtiquetteDAOImpl();
+    
 
     public VueDescriptionTache(TacheAbstraite tache,  Projet projet, ProjetService projetService) {
         this.tacheEnCoursEdition = tache;
         this.projet = projet;
         this.projetService = projetService;
+    }
+
+
+
+    public VueDescriptionTache(TacheAbstraite tache, Projet  projet) {
+        this.tacheEnCoursEdition = tache;
+        this.projet = projet;
+
 
         this.setTitle("Détails de la tâche");
         this.setHeaderText("Modifier la tâche : " + tache.getNom());
@@ -77,7 +89,9 @@ public class VueDescriptionTache extends Dialog<TacheAbstraite> {
         cbEtiquettesExistantes.setPromptText("Choisir une étiquette");
         cbEtiquettesExistantes.setPrefWidth(150);
 
-        chargerEtiquettesExistantes(cbEtiquettesExistantes);
+        chargerEtiquettesDuProjet(cbEtiquettesExistantes);
+
+        //chargerEtiquettesExistantes(cbEtiquettesExistantes);
 
         Button btnAddExistante = new Button("Attribuer");
         btnAddExistante.setOnAction(e -> {
@@ -199,22 +213,33 @@ public class VueDescriptionTache extends Dialog<TacheAbstraite> {
         });
     }
 
-    private void chargerEtiquettesExistantes(ComboBox<Etiquette> combo) {
+    private void chargerEtiquettesDuProjet(ComboBox<Etiquette> combo) {
         combo.getItems().clear();
-        try {
-            List<Etiquette> toutesLesEtiquettes = etiquetteDAO.getAllEtiquettes();
+        if (this.projet == null) return;
 
-            java.util.Set<Integer> idsVus = new java.util.HashSet<>();
+        Set<String> clesUniques = new HashSet<>();
 
-            for (Etiquette et : toutesLesEtiquettes) {
-                int id = et.getIdEtiquette();
-                if (!idsVus.contains(id)) {
-                    idsVus.add(id);
-                    combo.getItems().add(new Etiquette(id, et.getLibelle(), et.getCouleur()));
+        List<TacheAbstraite> toutesLesTaches = projet.getAllTaches();
+
+        for (TacheAbstraite t : toutesLesTaches) {
+            TacheAbstraite current = t;
+
+            while (current instanceof TacheDecorateur) {
+                if (current instanceof Etiquette) {
+                    Etiquette e = (Etiquette) current;
+                    String cle = e.getLibelle().toLowerCase() + e.getCouleur();
+
+                    if (!clesUniques.contains(cle)) {
+                        clesUniques.add(cle);
+
+                        Etiquette etiquetteAffichage = new Etiquette(null, e.getLibelle(), e.getCouleur());
+                        etiquetteAffichage.setIdEtiquette(e.getIdEtiquette());
+
+                        combo.getItems().add(etiquetteAffichage);
+                    }
                 }
+                current = ((TacheDecorateur) current).getTacheDecoree();
             }
-        } catch (Exception e) {
-            e.printStackTrace();
         }
     }
 
@@ -248,6 +273,7 @@ public class VueDescriptionTache extends Dialog<TacheAbstraite> {
                 lblNom.setStyle("-fx-text-fill: white; -fx-font-weight: bold;");
 
                 Button btnSuppr = new Button("X");
+                btnSuppr.setStyle("-fx-background-color: transparent; -fx-text-fill: white; -fx-font-size: 10px; -fx-padding: 0; -fx-cursor: hand; -fx-font-weight: bold;");
 
                 btnSuppr.setOnAction(e -> {
                     supprimerEtiquette(et, pane);

@@ -25,7 +25,10 @@ public class ControleurEditerTache implements EventHandler<MouseEvent> {
     @Override
     public void handle(MouseEvent event) {
         if (event.getButton().equals(MouseButton.PRIMARY) && event.getClickCount() == 2) {
+
             VueDescriptionTache dialog = new VueDescriptionTache(tache, projet, service);
+
+
             Optional<TacheAbstraite> resultat = dialog.showAndWait();
 
             resultat.ifPresent(tacheModifiee -> {

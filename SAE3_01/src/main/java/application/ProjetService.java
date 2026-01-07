@@ -410,4 +410,4 @@ public class ProjetService {
             return core;
         }
     }
-    
+
