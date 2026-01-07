@@ -12,11 +12,19 @@ public class Etiquette extends TacheDecorateur{
         this.couleur = couleur;
     }
 
+    public Etiquette(int id, String libelle, String couleur) {
+        super(null);
+        this.id = id;
+        this.libelle = libelle;
+        this.couleur = couleur;
+    }
+
+
     public String getLibelle() {
         return libelle;
     }
 
-    public int getId() {
+    public int getIdEtiquette() {
         return id;
     }
 
@@ -38,7 +46,7 @@ public class Etiquette extends TacheDecorateur{
         return couleur;
     }
 
-    public void setId(int id) {
+    public void setIdEtiquette(int id) {
         this.id = id;
     }
 
@@ -47,6 +55,11 @@ public class Etiquette extends TacheDecorateur{
     }
 
     public String setLibelle() {
+        return libelle;
+    }
+
+    @Override
+    public String toString() {
         return libelle;
     }
 }

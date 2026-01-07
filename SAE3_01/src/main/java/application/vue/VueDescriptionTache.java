@@ -1,6 +1,10 @@
 package application.vue;
 
 import application.*;
+import application.DAO.EtiquetteDAOImpl;
+import application.Etiquette;
+import application.TacheAbstraite;
+import application.TacheDecorateur;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
@@ -17,6 +21,7 @@ public class VueDescriptionTache extends Dialog<TacheAbstraite> {
     private TacheAbstraite tacheEnCoursEdition;
     private Projet projet;
     private ProjetService projetService;
+    private EtiquetteDAOImpl etiquetteDAO = new EtiquetteDAOImpl();
 
     public VueDescriptionTache(TacheAbstraite tache,  Projet projet, ProjetService projetService) {
         this.tacheEnCoursEdition = tache;
@@ -68,6 +73,33 @@ public class VueDescriptionTache extends Dialog<TacheAbstraite> {
         zoneEtiquettes.setHgap(5);
         updateAffichageEtiquettes(zoneEtiquettes);
 
+        ComboBox<Etiquette> cbEtiquettesExistantes = new ComboBox<>();
+        cbEtiquettesExistantes.setPromptText("Choisir une étiquette");
+        cbEtiquettesExistantes.setPrefWidth(150);
+
+        chargerEtiquettesExistantes(cbEtiquettesExistantes);
+
+        Button btnAddExistante = new Button("Attribuer");
+        btnAddExistante.setOnAction(e -> {
+            Etiquette selected = cbEtiquettesExistantes.getValue();
+            if (selected != null) {
+                // Vérifier si l'étiquette n'est pas déjà présente
+                if (!etiquetteDejaPresente(selected.getIdEtiquette())) {
+                    Etiquette nouvelleEtiquette = new Etiquette(
+                            this.tacheEnCoursEdition,
+                            selected.getLibelle(),
+                            selected.getCouleur()
+                    );
+                    nouvelleEtiquette.setIdEtiquette(selected.getIdEtiquette());
+                    this.tacheEnCoursEdition = nouvelleEtiquette;
+                    updateAffichageEtiquettes(zoneEtiquettes);
+                }
+            }
+        });
+
+        HBox boxEtiquetteExistante = new HBox(5, cbEtiquettesExistantes, btnAddExistante);
+
+
         TextField tfEtiquetteNom = new TextField();
         tfEtiquetteNom.setPromptText("Nom étiquette");
         ColorPicker colorPicker = new ColorPicker(Color.RED);
@@ -104,6 +136,8 @@ public class VueDescriptionTache extends Dialog<TacheAbstraite> {
         grid.add(zoneEtiquettes, 1, 6);
         grid.add(new Label("Nouvelle:"), 0, 7);
         grid.add(boxAjoutEtiquette, 1, 7);
+        grid.add(new Label("Attribuer:"), 0, 8);
+        grid.add(boxEtiquetteExistante, 1, 8);
 
         this.getDialogPane().setContent(grid);
 
@@ -165,6 +199,39 @@ public class VueDescriptionTache extends Dialog<TacheAbstraite> {
         });
     }
 
+    private void chargerEtiquettesExistantes(ComboBox<Etiquette> combo) {
+        combo.getItems().clear();
+        try {
+            List<Etiquette> toutesLesEtiquettes = etiquetteDAO.getAllEtiquettes();
+
+            java.util.Set<Integer> idsVus = new java.util.HashSet<>();
+
+            for (Etiquette et : toutesLesEtiquettes) {
+                int id = et.getIdEtiquette();
+                if (!idsVus.contains(id)) {
+                    idsVus.add(id);
+                    combo.getItems().add(new Etiquette(id, et.getLibelle(), et.getCouleur()));
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private boolean etiquetteDejaPresente(int idEtiquette) {
+        TacheAbstraite current = this.tacheEnCoursEdition;
+        while (current instanceof TacheDecorateur) {
+            if (current instanceof Etiquette) {
+                Etiquette et = (Etiquette) current;
+                if (et.getIdEtiquette() == idEtiquette) {
+                    return true;
+                }
+            }
+            current = ((TacheDecorateur) current).getTacheDecoree();
+        }
+        return false;
+    }
+
     private void updateAffichageEtiquettes(FlowPane pane) {
         pane.getChildren().clear();
         TacheAbstraite current = this.tacheEnCoursEdition;
@@ -216,7 +283,7 @@ public class VueDescriptionTache extends Dialog<TacheAbstraite> {
 
         for (Etiquette info : aGarder) {
             Etiquette nouvelleCouche = new Etiquette(this.tacheEnCoursEdition, info.getLibelle(), info.getCouleur());
-            nouvelleCouche.setId(info.getId());
+            nouvelleCouche.setIdEtiquette(info.getIdEtiquette());
 
             this.tacheEnCoursEdition = nouvelleCouche;
         }

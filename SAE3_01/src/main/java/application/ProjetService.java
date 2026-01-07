@@ -4,8 +4,8 @@ import application.DAO.ColonneDAOImpl;
 import application.DAO.EtiquetteDAOImpl;
 import application.DAO.ProjetDAOImpl;
 import application.DAO.TacheDAOImpl;
-
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -67,16 +67,22 @@ public class ProjetService {
 
     public void supprimerTache(Projet projet, Colonne colonne, TacheAbstraite tache) throws Exception {
         if (colonne == null || tache == null) return;
-
-        tacheDAO.delete(tache.getId());
-
+        TacheAbstraite tacheCore = extraireCore(tache);
+        tacheDAO.delete(tacheCore.getId());
         nettoyerTacheDeSaStructure(projet, tache);
-
         projet.notifierObservateurs();
     }
 
     public void deplacerTache(Projet projet, Colonne src, Colonne dest, TacheAbstraite tache) throws Exception {
         if (src == null || dest == null || tache == null) return;
+        TacheAbstraite tacheCore = extraireCore(tache);
+
+        colonneDAO.deplacerTacheDAO(dest.getId(), tacheCore.getId());
+
+        src.supprimerTache(tache);
+        dest.ajouterTache(tache);
+        projet.notifierObservateurs();
+
         updateColonneEnBaseRecursif(tache, dest.getId());
         src.supprimerTache(tache);
         dest.ajouterTache(tache);
@@ -97,13 +103,14 @@ public class ProjetService {
         }
     }
 
-    public boolean ajouterDependance(Projet projet,TacheMere mere, TacheAbstraite fille) throws Exception {
+    public boolean ajouterDependance(Projet projet, TacheMere mere, TacheAbstraite fille) throws Exception {
         if (mere == null || fille == null) return false;
 
-        tacheDAO.addDependanceDAO(fille.getId(), mere.getId());
+        TacheAbstraite mereCore = extraireCore(mere);
+        TacheAbstraite filleCore = extraireCore(fille);
 
+        tacheDAO.addDependanceDAO(filleCore.getId(), mereCore.getId());
         mere.ajouterDependance(fille);
-
         boolean succes = mere.ajouterDependance(fille);
         projet.notifierObservateurs();
 
@@ -113,17 +120,18 @@ public class ProjetService {
     public void changerEtat(Projet projet, TacheAbstraite tache, String etat) throws Exception {
         if (projet == null || tache == null) return;
 
-        tacheDAO.updateEtat(etat, tache.getId());
+        TacheAbstraite tacheCore = extraireCore(tache);
+
+        tacheDAO.updateEtat(etat, tacheCore.getId());
 
         tache.setEtat(etat);
         projet.notifierObservateurs();
-
     }
 
     public void ajouterEtiquette(Projet projet, int idCol,int indiceTache,TacheAbstraite tache, Etiquette et) throws Exception {
         if (tache == null || et == null || projet == null) return;
 
-        etiquetteDAO.attachEtiquetteToTache(tache.getId(), et.getId());
+        etiquetteDAO.attachEtiquetteToTache(tache.getId(), et.getIdEtiquette());
 
         TacheAbstraite tacheDecoree = new Etiquette(tache,et.getLibelle(),null);
 
@@ -144,18 +152,18 @@ public class ProjetService {
 
         tacheDAO.update_detail(tacheRacine);
         etiquetteDAO.supprimerLiensEtiquettes(tacheRacine.getId());
+
         TacheAbstraite courant = tacheModifiee;
         while (courant instanceof TacheDecorateur) {
             if (courant instanceof Etiquette) {
                 Etiquette et = (Etiquette) courant;
 
-                if (et.getId() == 0) {
+                if (et.getIdEtiquette() == 0) {
                     etiquetteDAO.save(et);
                 } else {
                     etiquetteDAO.save(et);
                 }
-
-                etiquetteDAO.attachEtiquetteToTache(et.getId(), tacheRacine.getId());
+                etiquetteDAO.attachEtiquetteToTache(et.getIdEtiquette(), tacheRacine.getId());
             }
             courant = ((TacheDecorateur) courant).getTacheDecoree();
         }
@@ -166,29 +174,61 @@ public class ProjetService {
             for (int i = 0; i < taches.size(); i++) {
                 TacheAbstraite t = taches.get(i);
 
-                TacheAbstraite tRacineDansListe = t;
-                while (tRacineDansListe instanceof TacheDecorateur) {
-                    tRacineDansListe = ((TacheDecorateur) tRacineDansListe).getTacheDecoree();
-                }
-
+                TacheAbstraite tRacineDansListe = extraireCore(t);
                 if (tRacineDansListe.getId() == tacheRacine.getId()) {
                     taches.set(i, tacheModifiee);
+                    remplace = true;
+                    break;
+                }
+
+                if (remplacerDansSousTaches(t, tacheRacine.getId(), tacheModifiee)) {
                     remplace = true;
                     break;
                 }
             }
             if (remplace) break;
         }
+
         projet.notifierObservateurs();
+    }
+
+    private boolean remplacerDansSousTaches(TacheAbstraite parent, int idCible, TacheAbstraite tacheModifiee) {
+        TacheAbstraite core = extraireCore(parent);
+
+        if (core instanceof TacheMere) {
+            TacheMere mere = (TacheMere) core;
+            List<TacheAbstraite> sousTaches = mere.getSousTaches();
+
+            for (int i = 0; i < sousTaches.size(); i++) {
+                TacheAbstraite st = sousTaches.get(i);
+                TacheAbstraite stCore = extraireCore(st);
+
+                if (stCore.getId() == idCible) {
+                    sousTaches.set(i, tacheModifiee);
+                    return true;
+                }
+
+                if (remplacerDansSousTaches(st, idCible, tacheModifiee)) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     public boolean ajouterDependance(Projet projet, TacheMere mere, TacheAbstraite fille, Colonne col, Colonne colCible) throws Exception {
         if (mere == null || fille == null) return false;
-        tacheDAO.addDependanceDAO(fille.getId(), mere.getId());
+
+        TacheAbstraite mereCore = extraireCore(mere);
+        TacheAbstraite filleCore = extraireCore(fille);
+
+        tacheDAO.addDependanceDAO(filleCore.getId(), mereCore.getId());
         mere.ajouterDependance(fille);
         col.getTaches().remove(fille);
+
         if (col != null && colCible != null && col.getId() != colCible.getId()) {
-            colonneDAO.deplacerTacheDAO(colCible.getId(), fille.getId());
+            colonneDAO.deplacerTacheDAO(colCible.getId(), filleCore.getId());
         }
 
         projet.notifierObservateurs();
@@ -197,7 +237,10 @@ public class ProjetService {
 
     public void detacherSousTache(Projet projet, TacheAbstraite tache, Colonne col) throws Exception {
         if (projet == null || tache == null) return;
-        tacheDAO.detacherSousTache(tache.getId(), col.getId());
+
+        TacheAbstraite tacheCore = extraireCore(tache);
+
+        tacheDAO.detacherSousTache(tacheCore.getId(), col.getId());
         TacheMere parent = trouverParent(projet, tache);
         nettoyerTacheDeSaStructure(projet, tache);
         col.ajouterTache(tache);
@@ -251,13 +294,9 @@ public class ProjetService {
                 List<TacheAbstraite> taches = tacheDAO.getTachesByColonneId(col.getId());
 
                 for (TacheAbstraite t : taches) {
-                    List<Etiquette> etiquettes = etiquetteDAO.getEtiquettesByTacheId(t.getId());
-                    for (Etiquette eInfo : etiquettes) {
-                        Etiquette etDecorateur = new Etiquette(t, eInfo.getLibelle(), eInfo.getCouleur());
-                        etDecorateur.setId(eInfo.getId());
-                        t = etDecorateur;
-                    }
-                    col.ajouterTache(t);
+                    TacheAbstraite tacheAvecEtiquette = chargerEtiquettes(t);
+
+                    col.ajouterTache(tacheAvecEtiquette);
                 }
                 p.getColonnes().add(col);
             }
@@ -325,5 +364,50 @@ public class ProjetService {
         return true;
     }
 
+        private TacheAbstraite chargerEtiquettes (TacheAbstraite t){
+            if (t == null) return null;
 
-}
+            TacheAbstraite base = t;
+            while (base instanceof TacheDecorateur) {
+                base = ((TacheDecorateur) base).getTacheDecoree();
+            }
+
+            if (base instanceof TacheMere) {
+                TacheMere mere = (TacheMere) base;
+                List<TacheAbstraite> sousTachesAvecEtiquettes = new ArrayList<>();
+
+                for (TacheAbstraite sousTache : mere.getSousTaches()) {
+                    TacheAbstraite sousTacheAvecEtiquettes = chargerEtiquettes(sousTache);
+                    sousTachesAvecEtiquettes.add(sousTacheAvecEtiquettes);
+                }
+
+                mere.getSousTaches().clear();
+                for (TacheAbstraite st : sousTachesAvecEtiquettes) {
+                    mere.getSousTaches().add(st);
+                }
+            }
+
+            TacheAbstraite tacheAvecEtiquettes = t;
+            try {
+                List<Etiquette> etiquettes = etiquetteDAO.getEtiquettesByTacheId(base.getId());
+                for (Etiquette eInfo : etiquettes) {
+                    Etiquette etDecorateur = new Etiquette(tacheAvecEtiquettes, eInfo.getLibelle(), eInfo.getCouleur());
+                    etDecorateur.setIdEtiquette(eInfo.getIdEtiquette());
+                    tacheAvecEtiquettes = etDecorateur;
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+            return tacheAvecEtiquettes;
+        }
+
+        private TacheAbstraite extraireCore (TacheAbstraite tache){
+            TacheAbstraite core = tache;
+            while (core instanceof TacheDecorateur) {
+                core = ((TacheDecorateur) core).getTacheDecoree();
+            }
+            return core;
+        }
+    }
+    

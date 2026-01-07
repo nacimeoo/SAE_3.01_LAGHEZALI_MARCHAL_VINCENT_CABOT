@@ -23,7 +23,7 @@ public class EtiquetteDAOImpl implements IEtiquetteDAO {
                 if (rs.next()) {
                     TacheDAOImpl tacheDAO = new TacheDAOImpl();
                     Etiquette etiquette = new Etiquette(tacheDAO.getTacheById(id_tache), rs.getString("nom"), rs.getString("couleur"));
-                    etiquette.setId(rs.getInt("id"));
+                    etiquette.setIdEtiquette(rs.getInt("id"));
                     return etiquette;
                 } else {
                     return null;
@@ -50,10 +50,9 @@ public class EtiquetteDAOImpl implements IEtiquetteDAO {
                 int idTache = rs.getInt("id_tache");
                 TacheAbstraite tache = tacheDAO.getTacheById(idTache);
 
-                // Vérification indispensable avant de décorer
                 if (tache != null) {
                     Etiquette etiquette = new Etiquette(tache, rs.getString("nom"), rs.getString("couleur"));
-                    etiquette.setId(rs.getInt("id"));
+                    etiquette.setIdEtiquette(rs.getInt("id"));
                     etiquettes.add(etiquette);
                 }
             }
@@ -68,7 +67,7 @@ public class EtiquetteDAOImpl implements IEtiquetteDAO {
         try (Connection connection = DBConnection.getConnection()) {
             boolean exists = false;
             try (PreparedStatement stmtExist = connection.prepareStatement(sqlExist)) {
-                stmtExist.setInt(1, etiquette.getId());
+                stmtExist.setInt(1, etiquette.getIdEtiquette());
                 try (ResultSet rs = stmtExist.executeQuery()) {
                     if (rs.next()) {
                         exists = rs.getInt(1) > 0;
@@ -81,7 +80,7 @@ public class EtiquetteDAOImpl implements IEtiquetteDAO {
                 try (PreparedStatement stmtUpdate = connection.prepareStatement(sqlUpdate)) {
                     stmtUpdate.setString(1, etiquette.getLibelle());
                     stmtUpdate.setString(2, etiquette.getCouleur());
-                    stmtUpdate.setInt(3, etiquette.getId());
+                    stmtUpdate.setInt(3, etiquette.getIdEtiquette());
                     stmtUpdate.executeUpdate();
                 }
             } else {
@@ -92,7 +91,7 @@ public class EtiquetteDAOImpl implements IEtiquetteDAO {
                     stmtInsert.executeUpdate();
                     try (ResultSet generatedKeys = stmtInsert.getGeneratedKeys()) {
                         if (generatedKeys.next()) {
-                            etiquette.setId(generatedKeys.getInt(1));
+                            etiquette.setIdEtiquette(generatedKeys.getInt(1));
                         }
                     }
                 }
@@ -130,7 +129,7 @@ public class EtiquetteDAOImpl implements IEtiquetteDAO {
                 while (rs.next()) {
                     TacheDAOImpl tacheDAO = new TacheDAOImpl();
                     Etiquette etiquette = new Etiquette(tacheDAO.getTacheById(tacheId), rs.getString("nom"), rs.getString("couleur"));
-                    etiquette.setId(rs.getInt("id"));
+                    etiquette.setIdEtiquette(rs.getInt("id"));
                     etiquettes.add(etiquette);
                 }
                 return etiquettes;
