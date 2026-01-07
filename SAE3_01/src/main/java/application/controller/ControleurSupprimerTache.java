@@ -4,11 +4,9 @@ import application.Colonne;
 import application.Projet;
 import application.ProjetService;
 import application.TacheAbstraite;
-import application.vue.VueKanban;
 import application.vue.VueProjet;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
-import javafx.scene.control.Alert;
 
 public class ControleurSupprimerTache implements EventHandler<ActionEvent> {
 
@@ -26,10 +24,19 @@ public class ControleurSupprimerTache implements EventHandler<ActionEvent> {
     public void handle(ActionEvent event) {
 
         TacheAbstraite tacheASupprimer = vue.getTacheSelectionnee();
-        Colonne colonneContenante = vue.getColonneSelectionnee();
         if (tacheASupprimer == null) {
             System.out.println("Aucune tâche sélectionnée !");
             return;
+        }
+
+        Colonne colonneContenante;
+
+
+        if (vue.estVueListe()) {
+            colonneContenante = projet.getColonnes().get(0);
+        } else {
+
+            colonneContenante = vue.getColonneSelectionnee();
         }
 
         if (colonneContenante != null) {

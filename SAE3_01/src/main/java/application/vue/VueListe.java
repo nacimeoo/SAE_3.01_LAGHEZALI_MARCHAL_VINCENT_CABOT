@@ -25,6 +25,7 @@ import java.util.*;
 public class VueListe extends BorderPane implements Observateur, VueProjet {
     private Projet projet;
     private ProjetService service;
+    private LocalDate dateSelectionnee = null;
 
     private VBox boardContainer;
     private TextField tfTask;
@@ -164,20 +165,19 @@ public class VueListe extends BorderPane implements Observateur, VueProjet {
                 )));
             }
             vueColonneSelectionnee = col;
+            dateSelectionnee = date;
             col.setBorder(new Border(new BorderStroke(
                     Color.BLUE, BorderStrokeStyle.SOLID, CornerRadii.EMPTY, new BorderWidths(2)
             )));
             colonneSelectionnee = new Colonne(date.toString());
         });
 
-        // CORRECTION : On affiche l'entête seulement pour la première tâche
         boolean isFirst = true;
         for (TacheAbstraite t : taches) {
             col.getChildren().add(creerCarteTache(t, isFirst));
             isFirst = false;
         }
 
-        // Drag & Drop Handling
         col.setOnDragOver(event -> {
             if (event.getGestureSource() != col && event.getDragboard().hasString()) {
                 event.acceptTransferModes(TransferMode.MOVE);
@@ -191,11 +191,15 @@ public class VueListe extends BorderPane implements Observateur, VueProjet {
             if (db.hasString()) {
                 try {
                     String idStr = db.getString();
-                    // On suppose que getTacheById prend un String ou int selon ton implémentation
+
+
                     TacheAbstraite t = projet.getTacheById(idStr);
                     if (t != null) {
+
                         t.setDateDebut(date);
-                        service.modifierTache(projet, t);
+
+                        service.ajusterDatesRecursifVersHaut(projet, t);
+
                         projet.notifierObservateurs();
                         success = true;
                     }
@@ -214,7 +218,6 @@ public class VueListe extends BorderPane implements Observateur, VueProjet {
         VBox bloc = new VBox(0);
         bloc.setMaxWidth(Region.USE_PREF_SIZE);
 
-        // CORRECTION ALIGNEMENT : Largeur harmonisée à 200px pour le nom
         double widthNom = 200;
         double widthPrio = 70;
         double widthEtat = 90;
@@ -244,19 +247,19 @@ public class VueListe extends BorderPane implements Observateur, VueProjet {
         ligne.setMaxWidth(Region.USE_PREF_SIZE);
         ligne.setStyle("-fx-border-color: black; -fx-background-color: white; -fx-font-size: 12px;");
         if (!afficherEntete) {
-            // Évite la double bordure si les lignes sont collées
+
             ligne.setStyle("-fx-border-color: black; -fx-border-width: 1 1 0 1; -fx-background-color: white; -fx-font-size: 12px;");
         }
 
-        // Zone Nom + Etiquettes
+
         VBox h = new VBox();
         Label lblNom = new Label(t.getNom());
-        lblNom.setPrefWidth(widthNom); // Utilise la largeur corrigée
+        lblNom.setPrefWidth(widthNom);
 
         FlowPane zoneEtiquettes = new FlowPane();
         zoneEtiquettes.setHgap(5);
         zoneEtiquettes.setVgap(3);
-        zoneEtiquettes.setPrefWidth(widthNom); // Alignement avec le titre
+        zoneEtiquettes.setPrefWidth(widthNom);
         zoneEtiquettes.setMaxWidth(widthNom);
         zoneEtiquettes.setAlignment(Pos.CENTER_LEFT);
 
@@ -288,7 +291,6 @@ public class VueListe extends BorderPane implements Observateur, VueProjet {
 
         ligne.getChildren().addAll(h, lblPriorite, lblEtat, lblDuree, lblDescription);
 
-        // Interaction
         ligne.setOnMouseClicked(e -> {
             e.consume();
             if (e.getClickCount() == 2) {
@@ -339,4 +341,19 @@ public class VueListe extends BorderPane implements Observateur, VueProjet {
             rafraichirVue();
         }
     }
+
+    @Override
+    public boolean estVueListe() {
+        return true;
+    }
+
+    @Override
+    public LocalDate getDateSelectionnee() {
+        return dateSelectionnee;
+    }
+
+    private void selectionnerDate(LocalDate date) {
+        this.dateSelectionnee = date;
+    }
+
 }
