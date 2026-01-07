@@ -269,6 +269,29 @@ public class VueKanban extends BorderPane implements Observateur, VueProjet {
         return null;
     }
 
+    private boolean estDescendant(TacheAbstraite parent, TacheAbstraite candidat) {
+        if (parent == null || candidat == null) return false;
+
+        TacheAbstraite coreParent = parent;
+
+        if (!(coreParent instanceof TacheMere)) {
+            return false;
+        }
+
+        TacheMere mere = (TacheMere) coreParent;
+
+        for (TacheAbstraite enfant : mere.getSousTaches()) {
+            if (enfant.getId() == candidat.getId()) {
+                return true;
+            }
+            if (estDescendant(enfant, candidat)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     private VBox createTaskCard(TacheAbstraite t, int indexColonneSource) {
         VBox cardContainer = new VBox(5);
         cardContainer.setPadding(new Insets(10));
@@ -341,63 +364,71 @@ public class VueKanban extends BorderPane implements Observateur, VueProjet {
         while (core instanceof TacheDecorateur) {
             core = ((TacheDecorateur) core).getTacheDecoree();
         }
-
-        if (core instanceof TacheMere) {
             TacheMere mere = (TacheMere) core;
-
             cardContainer.setOnDragOver(event -> {
                 if (event.getDragboard().hasString()) {
-                    try {
-                        String data = event.getDragboard().getString();
-                        if (data.contains(":")) {
+                    String data = event.getDragboard().getString();
+                    if (data.contains(":")) {
+                        try {
                             int idSource = Integer.parseInt(data.split(":")[1]);
-                            if (idSource != t.getId()) event.acceptTransferModes(TransferMode.MOVE);
-                        }
-                    } catch (Exception e) { }
-                }
-                event.consume();
-            });
+                            if (idSource != t.getId()) {
 
-            cardContainer.setOnDragDropped(event -> {
-                Dragboard db = event.getDragboard();
-                if (db.hasString()) {
-                    String[] parts = db.getString().split(":");
-                    int colSourceIdx = Integer.parseInt(parts[0]);
-                    int idFille = Integer.parseInt(parts[1]);
-                    try {
-                        TacheAbstraite fille = null;
-                        Colonne currentCol = projet.getColonnes().get(colSourceIdx);
-                        Colonne colCible = projet.getColonnes().get(indexColonneSource);
+                                TacheAbstraite sourceTask = trouverTacheParId(idSource);
 
-                        for (TacheAbstraite task : currentCol.getTaches()) {
-                            if (task.getId() == idFille) fille = task;
-                        }
+                                boolean isCircular = estDescendant(sourceTask, t);
 
-                        if (fille != null && fille != t) {
-
-                            try {
-                                
-                                service.ajouterDependance(projet, mere, fille, currentCol, colCible);
-
-
-                                service.ajusterDatesRecursifVersHaut(projet, fille);
-
-
-                                event.setDropCompleted(true);
-                            } catch (Exception ex) {
-                                ex.printStackTrace();
-                                event.setDropCompleted(false);
+                                if (!isCircular) {
+                                    event.acceptTransferModes(TransferMode.MOVE);
+                                }
                             }
-                            event.consume();
+                        } catch (Exception e) {
                         }
-                    } catch (Exception ex) {
-                        ex.printStackTrace();
                     }
                 }
                 event.consume();
             });
 
+        cardContainer.setOnDragDropped(event -> {
+            Dragboard db = event.getDragboard();
+            boolean success = false;
+            if (db.hasString()) {
+                try {
+                    String[] parts = db.getString().split(":");
+                    int idSource = Integer.parseInt(parts[1]);
 
+                    TacheAbstraite sourceTask = trouverTacheParId(idSource);
+
+                    if (sourceTask != null && sourceTask.getId() != t.getId()) {
+
+                        boolean dateValide = true;
+                        if (sourceTask.getDateDebut() != null && t.getDateDebut() != null) {
+                            if (sourceTask.getDateDebut().isAfter(t.getDateDebut())) {
+                                dateValide = false;
+                            }
+                        }
+
+                        if (!dateValide) {
+                            Alert alert = new Alert(Alert.AlertType.WARNING);
+                            alert.setTitle("Action impossible");
+                            alert.setContentText("La sous-tâche ne peut pas commencer après le parent.");
+                            alert.showAndWait();
+                            event.setDropCompleted(false);
+                            event.consume();
+                            return;
+                        }
+
+                        service.reassignerTache(projet, sourceTask, t);
+                        success = true;
+                    }
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+            }
+            event.setDropCompleted(success);
+            event.consume();
+        });
+
+        if (core != null) {
             VBox childrenBox = new VBox(5);
             childrenBox.setPadding(new Insets(5, 0, 0, 15));
             for (TacheAbstraite sous : mere.getSousTaches()) {

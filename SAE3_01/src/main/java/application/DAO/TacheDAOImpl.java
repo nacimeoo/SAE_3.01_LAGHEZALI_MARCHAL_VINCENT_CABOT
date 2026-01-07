@@ -242,17 +242,31 @@ public class TacheDAOImpl implements ITacheDAO {
     }
 
     public void addDependanceDAO(int idF, int idM) {
-        String sql = "INSERT INTO dependance (id_tache_mere, id_sous_tache) VALUES (?, ?)";
-        String sql2 = "UPDATE tache SET type = 1 WHERE id = ?";
-        try (Connection con = DBConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql);
-             PreparedStatement ps2 = con.prepareStatement(sql2)) {
-            ps.setInt(1, idM);
-            ps.setInt(2, idF);
-            ps.executeUpdate();
+        String sqlInsertDep = "INSERT INTO dependance (id_tache_mere, id_sous_tache) VALUES (?, ?)";
+        String sqlUpdateChild = "UPDATE tache SET type = 1 WHERE id = ?";
+        String sqlUpdateParent = "UPDATE tache SET type = 0 WHERE id = ?";
 
-            ps2.setInt(1, idF);
-            ps2.executeUpdate();
+        try (Connection con = DBConnection.getConnection()) {
+            con.setAutoCommit(false);
+            try (PreparedStatement psDep = con.prepareStatement(sqlInsertDep);
+                 PreparedStatement psChild = con.prepareStatement(sqlUpdateChild);
+                 PreparedStatement psParent = con.prepareStatement(sqlUpdateParent)) {
+
+                psDep.setInt(1, idM);
+                psDep.setInt(2, idF);
+                psDep.executeUpdate();
+
+                psChild.setInt(1, idF);
+                psChild.executeUpdate();
+
+                psParent.setInt(1, idM);
+                psParent.executeUpdate();
+
+                con.commit();
+            } catch (Exception e) {
+                con.rollback();
+                throw new RuntimeException(e);
+            }
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
