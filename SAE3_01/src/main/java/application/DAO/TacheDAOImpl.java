@@ -243,8 +243,8 @@ public class TacheDAOImpl implements ITacheDAO {
             stmt.setString(2, tache.getDescription());
             stmt.setInt(3, tache.getPriorite());
             stmt.setString(4, tache.getEtat());
-            if (tache.getDate() != null) {
-                stmt.setDate(5, Date.valueOf(tache.getDate()));
+            if (tache.getDateDebut() != null) {
+                stmt.setDate(5, Date.valueOf(tache.getDateDebut()));
             } else {
                 stmt.setNull(5, Types.DATE);
             }

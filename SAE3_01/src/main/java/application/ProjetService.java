@@ -228,7 +228,7 @@ public class ProjetService {
         }
     }
 
-    private TacheMere trouverParent(Projet projet, TacheAbstraite fille) {
+    public TacheMere trouverParent(Projet projet, TacheAbstraite fille) {
         for (Colonne c : projet.getColonnes()) {
             for (TacheAbstraite t : c.getTaches()) {
                 TacheMere parent = chercherParentRecursif(t, fille);
@@ -312,6 +312,46 @@ public class ProjetService {
         }
         return reponse;
     }
+
+    public LocalDate ajusterDateSelonRegles(
+            Projet projet,
+            TacheAbstraite tache,
+            LocalDate dateDemandee
+    ) {
+        if (dateDemandee == null) {
+            return tache.getDateDebut();
+        }
+
+
+        TacheMere mere = trouverParent(projet, tache);
+        if (mere != null) {
+            LocalDate dateMere = mere.getDateDebut();
+            if (dateMere != null && dateDemandee.isAfter(dateMere)) {
+                return dateMere;
+            }
+        }
+
+
+        if (tache instanceof TacheMere) {
+            TacheMere tm = (TacheMere) tache;
+
+            LocalDate maxSousTaches = null;
+            for (TacheAbstraite st : tm.getSousTaches()) {
+                if (st.getDateDebut() != null) {
+                    if (maxSousTaches == null || st.getDateDebut().isAfter(maxSousTaches)) {
+                        maxSousTaches = st.getDateDebut();
+                    }
+                }
+            }
+
+            if (maxSousTaches != null && dateDemandee.isBefore(maxSousTaches)) {
+                return maxSousTaches;
+            }
+        }
+
+        return dateDemandee;
+    }
+
 
     public boolean verifierDropTache(Projet projet, TacheAbstraite sousTache, TacheMere tacheMere) {
         if (sousTache.getDateDebut() != null && tacheMere.getDateDebut() != null) {
@@ -399,4 +439,45 @@ public class ProjetService {
         }
         return core;
     }
+
+    public void ajusterDateTacheMereSelonSousTaches(TacheMere mere) throws Exception {
+        if (mere == null) return;
+
+        LocalDate nouvelleDateDebut = mere.getDateDebut();
+
+        for (TacheAbstraite sous : mere.getSousTaches()) {
+            if (sous.getDateDebut() != null && sous.getDureeEstimee() > 0) {
+                LocalDate finSous = sous.getDateDebut().plusDays(sous.getDureeEstimee());
+                if (nouvelleDateDebut == null || finSous.isAfter(nouvelleDateDebut)) {
+                    nouvelleDateDebut = finSous;
+                }
+            }
+        }
+
+        if (nouvelleDateDebut != null) {
+            mere.setDateDebut(nouvelleDateDebut);
+            tacheDAO.update_detail(mere);
+        }
+    }
+
+    public void ajusterDatesRecursifVersHaut(Projet projet, TacheAbstraite tache) throws Exception {
+        if (tache == null) return;
+
+        TacheMere mere = trouverParent(projet, tache);
+
+        if (mere != null) {
+            ajusterDateTacheMereSelonSousTaches(mere);
+
+            try {
+
+                tacheDAO.update_detail(mere);
+
+                ajusterDatesRecursifVersHaut(projet, mere);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+
 }
