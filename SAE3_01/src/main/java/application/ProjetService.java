@@ -432,7 +432,7 @@ public class ProjetService {
         return archives;
     }
 
-    private TacheAbstraite extraireCore(TacheAbstraite tache) {
+    public TacheAbstraite extraireCore(TacheAbstraite tache) {
         TacheAbstraite core = tache;
         while (core instanceof TacheDecorateur) {
             core = ((TacheDecorateur) core).getTacheDecoree();

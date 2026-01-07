@@ -376,7 +376,7 @@ public class VueKanban extends BorderPane implements Observateur, VueProjet {
                         if (fille != null && fille != t) {
 
                             try {
-
+                                
                                 service.ajouterDependance(projet, mere, fille, currentCol, colCible);
 
 
