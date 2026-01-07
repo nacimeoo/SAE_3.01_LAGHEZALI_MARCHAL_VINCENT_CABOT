@@ -31,7 +31,7 @@ public class VueDescriptionTache extends Dialog<TacheAbstraite> {
         this.tacheEnCoursEdition = tache;
         this.projet = projet;
         this.projetService = projetService;
-    
+
 
 
 
@@ -163,16 +163,18 @@ public class VueDescriptionTache extends Dialog<TacheAbstraite> {
                 String nouvelEtat = cbEtat.getValue();
                 String etatActuel = tacheEnCoursEdition.getEtat();
 
-                if (!etatActuel.equals(nouvelEtat)) { // seulement si l'état a été modifié
+                if (nouvelEtat.equals("Terminer")) {
                     if (projetService.verifierEtatTacheMere(tacheEnCoursEdition)) {
-                        tacheEnCoursEdition.setEtat(nouvelEtat);
+                        tacheEnCoursEdition.setEtat("Terminer");
                     } else {
                         Alert alert = new Alert(Alert.AlertType.WARNING,
                                 "Impossible de modifier l'état : toutes les sous-tâches ne sont pas terminées.");
                         alert.setHeaderText("État invalide");
                         alert.showAndWait();
-                        
+
                     }
+                }else{
+                    tacheEnCoursEdition.setEtat(nouvelEtat);
                 }
 
                 tacheEnCoursEdition.setDescription(taDesc.getText());
