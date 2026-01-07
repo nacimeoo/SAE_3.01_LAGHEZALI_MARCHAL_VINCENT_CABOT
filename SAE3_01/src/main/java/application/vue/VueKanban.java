@@ -78,6 +78,10 @@ public class VueKanban extends BorderPane implements Observateur, VueProjet {
         btnGantt.setMaxWidth(Double.MAX_VALUE);
         btnGantt.setStyle("-fx-background-color: #a1d1f1; -fx-border-color: #000000;");
 
+        Button btnArchive = new Button("Voir Archives");
+        btnArchive.setMaxWidth(Double.MAX_VALUE);
+        btnArchive.setStyle("-fx-background-color: #d3d3d3; -fx-border-color: #000000;");
+
         Label lblAdd = new Label("Ajouter Tache");
         tfTask = new TextField();
         tfTask.setPromptText("Nom de la tâche...");
@@ -103,7 +107,7 @@ public class VueKanban extends BorderPane implements Observateur, VueProjet {
         ControleurSupprimerColonne ctrlSupprCol = new ControleurSupprimerColonne(projet, service, this);
         btnDeleteCol.setOnAction(ctrlSupprCol);
 
-        sidebar.getChildren().addAll(addTacheBox, btnDelete, btnDeleteCol, btnListe, btnGantt);
+        sidebar.getChildren().addAll(addTacheBox, btnDelete, btnDeleteCol, btnListe, btnGantt, btnArchive);
         this.setRight(sidebar);
     }
 
@@ -228,7 +232,9 @@ public class VueKanban extends BorderPane implements Observateur, VueProjet {
         col.getChildren().add(new Label(c.getNom()));
 
         for (TacheAbstraite t : c.getTaches()) {
-            col.getChildren().add(createTaskCard(t, indexColonne));
+            if (!"Archivée".equals(t.getEtat())) {
+                col.getChildren().add(createTaskCard(t, indexColonne));
+            }
         }
         return col;
     }
@@ -398,7 +404,9 @@ public class VueKanban extends BorderPane implements Observateur, VueProjet {
             VBox childrenBox = new VBox(5);
             childrenBox.setPadding(new Insets(5, 0, 0, 15));
             for (TacheAbstraite sous : mere.getSousTaches()) {
-                childrenBox.getChildren().add(createTaskCard(sous, indexColonneSource));
+                if (!"Archivée".equals(sous.getEtat())) {
+                    childrenBox.getChildren().add(createTaskCard(sous, indexColonneSource));
+                }
             }
             cardContainer.getChildren().add(childrenBox);
         }

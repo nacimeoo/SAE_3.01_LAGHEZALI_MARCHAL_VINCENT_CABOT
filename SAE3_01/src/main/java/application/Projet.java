@@ -1,5 +1,7 @@
 package application;
 
+import application.DAO.ITacheDAO;
+
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -65,6 +67,7 @@ public class Projet implements Sujet {
 
         return toutes;
     }
+
     private void ajouterTacheAvecSousTaches(TacheAbstraite tache, List<TacheAbstraite> liste) {
         if (!liste.contains(tache)) {
             liste.add(tache);
