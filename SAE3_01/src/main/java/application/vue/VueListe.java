@@ -115,9 +115,10 @@ public class VueListe extends BorderPane implements Observateur, VueProjet {
 
         Map<LocalDate, List<TacheAbstraite>> tachesParDate = new TreeMap<>();
 
-        for (TacheAbstraite t : projet.getAllTaches()) {
-            if (t.getDate() != null) {
-                tachesParDate.computeIfAbsent(t.getDate(), d -> new ArrayList<>()).add(t);
+        for (Colonne colonne : projet.getColonnes()) {
+            for (TacheAbstraite t : colonne.getTaches()) {
+                // Récupérer toutes les tâches (racines + sous-tâches) avec leurs étiquettes
+                collecterTachesAvecDate(t, tachesParDate);
             }
         }
 
@@ -129,6 +130,29 @@ public class VueListe extends BorderPane implements Observateur, VueProjet {
         System.out.println("Nb taches projet = " + projet.getAllTaches().size());
         for (TacheAbstraite t : projet.getAllTaches()) {
             System.out.println(t.getNom() + " -> " + t.getDate());
+        }
+    }
+
+    private void collecterTachesAvecDate(TacheAbstraite tache, Map<LocalDate, List<TacheAbstraite>> map) {
+        if (tache == null) return;
+
+        // Ajouter la tâche actuelle si elle a une date
+        if (tache.getDate() != null) {
+            map.computeIfAbsent(tache.getDate(), d -> new ArrayList<>()).add(tache);
+        }
+
+        // Extraire le core pour vérifier s'il y a des sous-tâches
+        TacheAbstraite core = tache;
+        while (core instanceof TacheDecorateur) {
+            core = ((TacheDecorateur) core).getTacheDecoree();
+        }
+
+        // Si c'est une TacheMere, traiter récursivement les sous-tâches
+        if (core instanceof TacheMere) {
+            TacheMere mere = (TacheMere) core;
+            for (TacheAbstraite sousTache : mere.getSousTaches()) {
+                collecterTachesAvecDate(sousTache, map);
+            }
         }
     }
 
@@ -220,6 +244,7 @@ public class VueListe extends BorderPane implements Observateur, VueProjet {
             Label hNom = new Label("Nom");
             hNom.setPrefWidth(180);
 
+
             Label hPriorite = new Label("Priorité");
             hPriorite.setPrefWidth(80);
 
@@ -244,8 +269,42 @@ public class VueListe extends BorderPane implements Observateur, VueProjet {
         ligne.setAlignment(Pos.CENTER_LEFT);
         ligne.setStyle("-fx-border-color: black; -fx-background-color: white;");
 
+        VBox h = new VBox();
         Label lblNom = new Label(t.getNom());
         lblNom.setPrefWidth(180);
+
+
+        FlowPane zoneEtiquettes = new FlowPane();
+        zoneEtiquettes.setHgap(5);
+        zoneEtiquettes.setVgap(3);
+        zoneEtiquettes.setPrefWidth(200);
+        zoneEtiquettes.setMaxWidth(200);
+        zoneEtiquettes.setAlignment(Pos.CENTER_LEFT);
+
+        TacheAbstraite current = t;
+        while (current instanceof TacheDecorateur) {
+            if (current instanceof Etiquette) {
+                Etiquette et = (Etiquette) current;
+
+                Label lblEtiquette = new Label(et.getLibelle());
+
+                String hexColor = et.getCouleur().startsWith("0x") ? et.getCouleur().replace("0x", "#") : et.getCouleur();
+
+                lblEtiquette.setStyle(
+                        "-fx-background-color: " + hexColor + ";" +
+                                "-fx-text-fill: white;" +
+                                "-fx-padding: 2 5;" +
+                                "-fx-background-radius: 3;" +
+                                "-fx-font-size: 10px;" +
+                                "-fx-font-weight: bold;"
+                );
+
+                zoneEtiquettes.getChildren().add(lblEtiquette);
+            }
+            current = ((TacheDecorateur) current).getTacheDecoree();
+        }
+
+        h.getChildren().addAll(lblNom, zoneEtiquettes);
 
         Label lblPriorite = new Label(String.valueOf(t.getPriorite()));
         lblPriorite.setPrefWidth(80);
@@ -262,7 +321,7 @@ public class VueListe extends BorderPane implements Observateur, VueProjet {
         lblDescription.setPrefWidth(300);
 
         ligne.getChildren().addAll(
-                lblNom,
+                h,
                 lblPriorite,
                 lblEtat,
                 lblDuree,
