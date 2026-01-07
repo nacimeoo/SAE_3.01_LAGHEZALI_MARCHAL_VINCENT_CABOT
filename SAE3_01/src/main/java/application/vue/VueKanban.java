@@ -16,6 +16,8 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 
+import java.time.LocalDate;
+
 public class VueKanban extends BorderPane implements Observateur, VueProjet {
 
     private Projet projet;
@@ -372,26 +374,21 @@ public class VueKanban extends BorderPane implements Observateur, VueProjet {
                         }
 
                         if (fille != null && fille != t) {
-                            // Vérifie les règles de dates avant d'ajouter la dépendance
-                            if (!service.verifierDropTache(projet, fille, mere)) {
-                                // Affiche un pop-up si non valide
-                                Alert alert = new Alert(Alert.AlertType.WARNING);
-                                alert.setTitle("Déplacement interdit");
-                                alert.setHeaderText("Règles de dates non respectées");
-                                alert.setContentText(
-                                        "Impossible de déplacer cette sous-tâche :\n" +
-                                                "• La sous-tâche ne peut pas commencer après sa tâche mère\n" +
-                                                "• La tâche mère ne peut pas commencer avant ses sous-tâches"
-                                );
-                                alert.showAndWait();
 
+                            try {
+                                
+                                service.ajouterDependance(projet, mere, fille, currentCol, colCible);
+
+
+                                service.ajusterDatesRecursifVersHaut(projet, fille);
+
+
+                                event.setDropCompleted(true);
+                            } catch (Exception ex) {
+                                ex.printStackTrace();
                                 event.setDropCompleted(false);
-                                event.consume();
-                                return;
                             }
-
-                            service.ajouterDependance(projet, mere, fille, currentCol, colCible);
-                            event.setDropCompleted(true);
+                            event.consume();
                         }
                     } catch (Exception ex) {
                         ex.printStackTrace();

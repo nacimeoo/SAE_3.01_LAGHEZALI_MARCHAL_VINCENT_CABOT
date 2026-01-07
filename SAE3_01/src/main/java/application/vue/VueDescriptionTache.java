@@ -14,6 +14,7 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.paint.Color;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -185,17 +186,18 @@ public class VueDescriptionTache extends Dialog<TacheAbstraite> {
                 else if ("Haute".equals(prioTexte)) prioInt = 3;
 
                 tacheEnCoursEdition.setPriorite(prioInt);
-
-                if (projetService.verifierReglesDates(projet, tacheEnCoursEdition, dpDate.getValue())){
-                    tacheEnCoursEdition.setDateDebut(dpDate.getValue());
-                }else{
-                    Alert alert = new Alert(Alert.AlertType.WARNING,
-                            "La date ne respecte pas les règles du projet :\n" +
-                                    "• Une sous-tâche ne peut pas commencer après sa tâche mère\n" +
-                                    "• Une tâche mère ne peut pas commencer avant ses sous-tâches");
-                    alert.setHeaderText("Date invalide");
-                    alert.showAndWait();
+                LocalDate dateCorrigee = projetService.ajusterDateSelonRegles(
+                        projet,
+                        tacheEnCoursEdition,
+                        dpDate.getValue()
+                );
+                tacheEnCoursEdition.setDateDebut(dateCorrigee);
+                try {
+                    projetService.ajusterDatesRecursifVersHaut(projet, tacheEnCoursEdition);
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
                 }
+
 
                 try {
                     String dureeTxt = tfDuree.getText();
