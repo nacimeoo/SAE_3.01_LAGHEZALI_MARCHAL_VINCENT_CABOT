@@ -282,4 +282,30 @@ public class TacheDAOImpl implements ITacheDAO {
             }
         }
     }
+
+    @Override
+    public List<TacheAbstraite> getTachesArchivees(int idProjet) throws Exception {
+        String sql = """
+            SELECT t.* FROM tache t
+            JOIN colonne2tache c2t ON t.id = c2t.id_tache
+            JOIN colonne c ON c2t.id_colonne = c.id
+            JOIN projet2colonne p2c ON c.id = p2c.id_colonne
+            WHERE p2c.id_projet = ? AND t.etat = 'Archivée'
+        """;
+        List<TacheAbstraite> taches = new ArrayList<>();
+        try (Connection con = DBConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, idProjet);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    TacheAbstraite t = construireTache(rs);
+                    if (t instanceof TacheMere) {
+                        chargerSousTaches((TacheMere) t);
+                    }
+                    taches.add(t);
+                }
+            }
+        }
+        return taches;
+    }
 }

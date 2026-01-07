@@ -39,6 +39,7 @@ public abstract class TacheDecorateur extends TacheAbstraite{
 
     @Override
     public String getNom() { return tacheDecoree.getNom(); }
+
     @Override
     public void setNom(String nom) { tacheDecoree.setNom(nom); }
 

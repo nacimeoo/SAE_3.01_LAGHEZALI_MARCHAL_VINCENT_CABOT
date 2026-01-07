@@ -110,10 +110,15 @@ public class ProjetService {
 
     public void changerEtat(Projet projet, TacheAbstraite tache, String etat) throws Exception {
         if (projet == null || tache == null) return;
+        TacheAbstraite tacheRacine = tache;
+        while (tacheRacine instanceof TacheDecorateur) {
+            tacheRacine = ((TacheDecorateur) tacheRacine).getTacheDecoree();
+        }
+        tacheDAO.updateEtat(etat, tacheRacine.getId());
 
-        tacheDAO.updateEtat(etat, tache.getId());
-
+        tacheRacine.setEtat(etat);
         tache.setEtat(etat);
+
         projet.notifierObservateurs();
 
     }
@@ -290,6 +295,27 @@ public class ProjetService {
             e.printStackTrace();
             return null;
         }
+    }
+
+    public List<TacheAbstraite> chargerArchives(int idProjet) {
+        List<TacheAbstraite> archives = new java.util.ArrayList<>();
+        try {
+            archives = tacheDAO.getTachesArchivees(idProjet);
+
+            for (int i = 0; i < archives.size(); i++) {
+                TacheAbstraite t = archives.get(i);
+                List<Etiquette> etiquettes = etiquetteDAO.getEtiquettesByTacheId(t.getId());
+                for (Etiquette eInfo : etiquettes) {
+                    Etiquette etDecorateur = new Etiquette(t, eInfo.getLibelle(), eInfo.getCouleur());
+                    etDecorateur.setId(eInfo.getId());
+                    t = etDecorateur;
+                }
+                archives.set(i, t);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return archives;
     }
 
 

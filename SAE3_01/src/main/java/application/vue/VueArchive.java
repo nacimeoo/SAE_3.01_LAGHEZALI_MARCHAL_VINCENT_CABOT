@@ -67,7 +67,7 @@ public class VueArchive extends BorderPane implements Observateur, VueProjet {
 
     private void rafraichirVue() {
         containerTaches.getChildren().clear();
-        List<TacheAbstraite> archives = collecterTachesArchivees();
+        List<TacheAbstraite> archives = service.chargerArchives(projet.getId());
 
         if (archives.isEmpty()) {
             Label lblVide = new Label("La corbeille d'archives est vide.");
@@ -80,29 +80,6 @@ public class VueArchive extends BorderPane implements Observateur, VueProjet {
         }
     }
 
-    private List<TacheAbstraite> collecterTachesArchivees() {
-        List<TacheAbstraite> resultats = new ArrayList<>();
-        for (Colonne c : projet.getColonnes()) {
-            for (TacheAbstraite t : c.getTaches()) {
-                chercherArchivesRecursif(t, resultats);
-            }
-        }
-        return resultats;
-    }
-
-    private void chercherArchivesRecursif(TacheAbstraite t, List<TacheAbstraite> resultats) {
-        if ("Archivée".equals(t.getEtat())) {
-            resultats.add(t);
-        }
-        TacheAbstraite core = t;
-        while (core instanceof TacheDecorateur) core = ((TacheDecorateur) core).getTacheDecoree();
-        if (core instanceof TacheMere) {
-            for (TacheAbstraite sous : ((TacheMere) core).getSousTaches()) {
-                chercherArchivesRecursif(sous, resultats);
-            }
-        }
-    }
-
     private HBox creerCarteArchive(TacheAbstraite t) {
         HBox card = new HBox(15);
         card.setAlignment(Pos.CENTER_LEFT);
@@ -110,10 +87,31 @@ public class VueArchive extends BorderPane implements Observateur, VueProjet {
         card.setStyle("-fx-background-color: #f8f9fa; -fx-border-color: #dee2e6; -fx-border-radius: 5;");
 
         VBox infoBox = new VBox(5);
+
+        HBox nomEtLabelsBox = new HBox(10);
+        nomEtLabelsBox.setAlignment(Pos.CENTER_LEFT);
+
         Label lblNom = new Label(t.getNom());
         lblNom.setFont(Font.font("Arial", FontWeight.BOLD, 14));
+        lblNom.setStyle("-fx-text-fill: black;");
+        nomEtLabelsBox.getChildren().add(lblNom);
+
+        TacheAbstraite temp = t;
+        while(temp instanceof TacheDecorateur) {
+            if(temp instanceof Etiquette) {
+                Etiquette e = (Etiquette) temp;
+                Label tag = new Label(e.getLibelle());
+                String color = e.getCouleur().startsWith("0x") ? e.getCouleur().replace("0x", "#") : e.getCouleur();
+                tag.setStyle("-fx-background-color: " + color + "; -fx-text-fill: white; -fx-padding: 2 5; -fx-background-radius: 3; -fx-font-size: 10px;");
+                nomEtLabelsBox.getChildren().add(tag);
+            }
+            temp = ((TacheDecorateur) temp).getTacheDecoree();
+        }
+
         Label lblDesc = new Label(t.getDescription());
-        infoBox.getChildren().addAll(lblNom, lblDesc);
+        lblDesc.setStyle("-fx-text-fill: #555;");
+
+        infoBox.getChildren().addAll(nomEtLabelsBox, lblDesc);
         HBox.setHgrow(infoBox, Priority.ALWAYS);
 
         Button btnRestaurer = new Button("Restaurer");
