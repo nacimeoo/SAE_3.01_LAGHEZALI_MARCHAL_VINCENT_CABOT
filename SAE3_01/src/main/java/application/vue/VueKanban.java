@@ -91,6 +91,7 @@ public class VueKanban extends BorderPane implements Observateur, VueProjet {
         btnAdd.setMaxWidth(Double.MAX_VALUE);
 
         ControleurAjouterTache ctrlAjout = new ControleurAjouterTache(projet, service, this, tfTask);
+
         btnAdd.setOnAction(ctrlAjout);
 
         addTacheBox.getChildren().addAll(lblAdd, tfTask, btnAdd);
@@ -269,6 +270,29 @@ public class VueKanban extends BorderPane implements Observateur, VueProjet {
         return null;
     }
 
+    private boolean estDescendant(TacheAbstraite parent, TacheAbstraite candidat) {
+        if (parent == null || candidat == null) return false;
+
+        TacheAbstraite coreParent = parent;
+
+        if (!(coreParent instanceof TacheMere)) {
+            return false;
+        }
+
+        TacheMere mere = (TacheMere) coreParent;
+
+        for (TacheAbstraite enfant : mere.getSousTaches()) {
+            if (enfant.getId() == candidat.getId()) {
+                return true;
+            }
+            if (estDescendant(enfant, candidat)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     private VBox createTaskCard(TacheAbstraite t, int indexColonneSource) {
         VBox cardContainer = new VBox(5);
         cardContainer.setPadding(new Insets(10));
@@ -347,13 +371,23 @@ public class VueKanban extends BorderPane implements Observateur, VueProjet {
 
             cardContainer.setOnDragOver(event -> {
                 if (event.getDragboard().hasString()) {
-                    try {
-                        String data = event.getDragboard().getString();
-                        if (data.contains(":")) {
+                    String data = event.getDragboard().getString();
+                    if (data.contains(":")) {
+                        try {
                             int idSource = Integer.parseInt(data.split(":")[1]);
-                            if (idSource != t.getId()) event.acceptTransferModes(TransferMode.MOVE);
+                            if (idSource != t.getId()) {
+
+                                TacheAbstraite sourceTask = trouverTacheParId(idSource);
+
+                                boolean isCircular = estDescendant(sourceTask, t);
+
+                                if (!isCircular) {
+                                    event.acceptTransferModes(TransferMode.MOVE);
+                                }
+                            }
+                        } catch (Exception e) {
                         }
-                    } catch (Exception e) { }
+                    }
                 }
                 event.consume();
             });
@@ -376,6 +410,7 @@ public class VueKanban extends BorderPane implements Observateur, VueProjet {
                         if (fille != null && fille != t) {
 
                             try {
+                                
                                 service.ajouterDependance(projet, mere, fille, currentCol, colCible);
 
 
@@ -408,10 +443,6 @@ public class VueKanban extends BorderPane implements Observateur, VueProjet {
         }
 
         return cardContainer;
-    }
-
-    public boolean estVueListe() {
-        return false;
     }
 
 

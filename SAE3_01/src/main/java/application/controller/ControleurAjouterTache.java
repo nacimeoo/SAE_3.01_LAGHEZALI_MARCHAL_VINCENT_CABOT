@@ -43,10 +43,13 @@ public class ControleurAjouterTache implements EventHandler<ActionEvent> {
 
         } else {
 
+
             colonnePourBD = vue.getColonneSelectionnee();
         }
 
-        if (colonnePourBD == null) return;
+        if (colonnePourBD == null && !projet.getColonnes().isEmpty()) {
+            colonnePourBD = projet.getColonnes().get(0);
+        }
 
         try {
             service.ajouterTache(projet, colonnePourBD, tache);
