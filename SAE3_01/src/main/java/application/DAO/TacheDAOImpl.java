@@ -243,11 +243,16 @@ public class TacheDAOImpl implements ITacheDAO {
 
     public void addDependanceDAO(int idF, int idM) {
         String sql = "INSERT INTO dependance (id_tache_mere, id_sous_tache) VALUES (?, ?)";
+        String sql2 = "UPDATE tache SET type = 1 WHERE id = ?";
         try (Connection con = DBConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
+             PreparedStatement ps = con.prepareStatement(sql);
+             PreparedStatement ps2 = con.prepareStatement(sql2)) {
             ps.setInt(1, idM);
             ps.setInt(2, idF);
             ps.executeUpdate();
+
+            ps2.setInt(1, idF);
+            ps2.executeUpdate();
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
@@ -280,12 +285,14 @@ public class TacheDAOImpl implements ITacheDAO {
         String sqlDeleteDep = "DELETE FROM dependance WHERE id_sous_tache = ?";
         String sqlDeleteCol = "DELETE FROM colonne2tache WHERE id_tache = ?";
         String sqlInsertCol = "INSERT INTO colonne2tache (id_colonne, id_tache) VALUES (?, ?)";
+        String sqlUpdateType = "UPDATE tache SET type = 0 WHERE id = ?";
 
         try (Connection con = DBConnection.getConnection()) {
             con.setAutoCommit(false);
             try (PreparedStatement psDep = con.prepareStatement(sqlDeleteDep);
                  PreparedStatement psDelCol = con.prepareStatement(sqlDeleteCol);
-                 PreparedStatement psInsCol = con.prepareStatement(sqlInsertCol)) {
+                 PreparedStatement psInsCol = con.prepareStatement(sqlInsertCol);
+                 PreparedStatement psUpdateType = con.prepareStatement(sqlUpdateType)) {
 
                 psDep.setInt(1, idTache);
                 psDep.executeUpdate();
@@ -296,6 +303,9 @@ public class TacheDAOImpl implements ITacheDAO {
                 psInsCol.setInt(1, idColonne);
                 psInsCol.setInt(2, idTache);
                 psInsCol.executeUpdate();
+
+                psUpdateType.setInt(1, idTache);
+                psUpdateType.executeUpdate();
 
                 con.commit();
             } catch (Exception e) {
