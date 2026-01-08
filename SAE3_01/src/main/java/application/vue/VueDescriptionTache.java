@@ -89,7 +89,7 @@ public class VueDescriptionTache extends Dialog<TacheAbstraite> {
         btnAddExistante.setOnAction(e -> {
             Etiquette selected = cbEtiquettesExistantes.getValue();
             if (selected != null) {
-                // Vérifier si l'étiquette n'est pas déjà présente
+
                 if (!etiquetteDejaPresente(selected.getIdEtiquette())) {
                     Etiquette nouvelleEtiquette = new Etiquette(
                             this.tacheEnCoursEdition,
@@ -153,7 +153,6 @@ public class VueDescriptionTache extends Dialog<TacheAbstraite> {
                 tacheEnCoursEdition.setDescription(taDesc.getText());
 
                 String nouvelEtat = cbEtat.getValue();
-                String etatActuel = tacheEnCoursEdition.getEtat();
 
                 if (nouvelEtat.equals("Terminer")) {
                     if (projetService.verifierEtatTacheMere(tacheEnCoursEdition)) {
