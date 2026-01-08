@@ -79,31 +79,6 @@ public class TacheDAOImpl implements ITacheDAO {
         }
     }
 
-    public void chargerSousTaches(TacheMere mere) throws Exception {
-        try (Connection con = DBConnection.getConnection()) {
-            chargerSousTachesInternal(mere, con);
-        }
-    }
-
-    @Override
-    public List<TacheAbstraite> getAllTaches() throws Exception {
-        String sql = "SELECT * FROM tache WHERE etat <> 'Archivée'";
-        List<TacheAbstraite> taches = new ArrayList<>();
-        try (Connection con = DBConnection.getConnection();
-             Statement stmt = con.createStatement();
-             ResultSet rs = stmt.executeQuery(sql)) {
-
-            while (rs.next()) {
-                TacheAbstraite t = construireTache(rs);
-                if (t instanceof TacheMere) {
-                    // Utilisation de la méthode interne pour charger l'arbre complet
-                    chargerSousTachesInternal((TacheMere) t, con);
-                }
-                taches.add(t);
-            }
-        }
-        return taches;
-    }
 
     @Override
     public List<TacheAbstraite> getTachesByColonneId(int colonneId) throws Exception {
