@@ -1,14 +1,10 @@
 package application.vue;
 
 import application.Colonne;
-import application.DAO.ITacheDAO;
-import application.DAO.TacheDAOImpl;
 import application.controller.*;
 import application.*;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.Node;
-import javafx.scene.SnapshotParameters;
 import javafx.scene.control.*;
 import javafx.scene.input.*;
 import javafx.scene.layout.*;
@@ -16,14 +12,11 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 
-import java.time.LocalDate;
-
 public class VueKanban extends BorderPane implements Observateur, VueProjet {
 
     private Projet projet;
     private ProjetService service;
 
-    // Conteneurs graphiques
     private HBox boardContainer;
     private TextField tfTask;
 
