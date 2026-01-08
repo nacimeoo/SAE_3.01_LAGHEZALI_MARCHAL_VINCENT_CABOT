@@ -224,10 +224,31 @@ public class TacheDAOImpl implements ITacheDAO {
 
     @Override
     public void delete(int id) throws Exception {
-        try (Connection con = DBConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement("DELETE FROM tache WHERE id = ?")) {
-            ps.setInt(1, id);
-            ps.executeUpdate();
+        try (Connection con = DBConnection.getConnection()) {
+            String sqlDep = "DELETE FROM dependance WHERE id_tache_mere = ? OR id_sous_tache = ?";
+            try(PreparedStatement ps = con.prepareStatement(sqlDep)){
+                ps.setInt(1, id);
+                ps.setInt(2, id);
+                ps.executeUpdate();
+            }
+
+            String sqlCol = "DELETE FROM colonne2tache WHERE id_tache = ?";
+            try(PreparedStatement ps = con.prepareStatement(sqlCol)){
+                ps.setInt(1, id);
+                ps.executeUpdate();
+            }
+
+            String sqlEti = "DELETE FROM tache2etiquette WHERE id_tache = ?";
+            try(PreparedStatement ps = con.prepareStatement(sqlEti)){
+                ps.setInt(1, id);
+                ps.executeUpdate();
+            }
+
+            String sqlTache = "DELETE FROM tache WHERE id = ?";
+            try(PreparedStatement ps = con.prepareStatement(sqlTache)) {
+                ps.setInt(1, id);
+                ps.executeUpdate();
+            }
         }
     }
 

@@ -83,20 +83,13 @@ public class ProjetDAOImpl implements IProjetDAO {
     @Override
     public void delete(int id) throws Exception {
         try (Connection conn = DBConnection.getConnection()) {
-            String sql = "DELETE FROM projet WHERE id = ?";
-            String sql2 = "SELECT id_colonne FROM projet2colonne WHERE id_projet = ?";
 
-            try (PreparedStatement stmt = conn.prepareStatement(sql)) {
-                stmt.setInt(1, id);
-                stmt.executeUpdate();
-            } catch (Exception e) {
-                throw new Exception("Erreur lors de l'exécution de la requête de suppression du projet avec l'ID: " + id, e);
-            }
+            String sqlGetColonnes = "SELECT id_colonne FROM projet2colonne WHERE id_projet = ?";
+            List<Integer> colonneIds = new ArrayList<>();
 
-            try (PreparedStatement stmt = conn.prepareStatement(sql2)) {
+            try (PreparedStatement stmt = conn.prepareStatement(sqlGetColonnes)) {
                 stmt.setInt(1, id);
                 try (ResultSet rs = stmt.executeQuery()) {
-                    List<Integer> colonneIds = new ArrayList<>();
                     while (rs.next()) {
                         colonneIds.add(rs.getInt("id_colonne"));
                     }
@@ -106,11 +99,23 @@ public class ProjetDAOImpl implements IProjetDAO {
                     }
                 }
             } catch (Exception e) {
-                throw new Exception("Erreur lors de la suppression des associations projet-colonne pour l'ID: " + id, e);
+                throw new Exception("Erreur lors de la récupération des colonnes du projet " + id, e);
+            }
+
+            String sqlDeleteLinks = "DELETE FROM projet2colonne WHERE id_projet = ?";
+            try (PreparedStatement stmt = conn.prepareStatement(sqlDeleteLinks)) {
+                stmt.setInt(1, id);
+                stmt.executeUpdate();
+            }
+
+            String sqlDeleteProjet = "DELETE FROM projet WHERE id = ?";
+            try (PreparedStatement stmt = conn.prepareStatement(sqlDeleteProjet)) {
+                stmt.setInt(1, id);
+                stmt.executeUpdate();
             }
 
         } catch (Exception e) {
-            throw new Exception("Erreur lors de la connexion", e);
+            throw new Exception("Erreur globale lors de la suppression du projet", e);
         }
     }
 
