@@ -111,25 +111,30 @@ public class TacheDAOImpl implements ITacheDAO {
 
     @Override
     public List<TacheAbstraite> getTachesArchivees(int idProjet) throws Exception {
-        String sql = """
-            SELECT DISTINCT t.* FROM tache t
-            JOIN colonne2tache c2t ON t.id = c2t.id_tache
-            JOIN colonne c ON c2t.id_colonne = c.id
-            JOIN projet2colonne p2c ON c.id = p2c.id_colonne
-            WHERE p2c.id_projet = ? AND t.etat = 'Archivée'
-        """;
 
+        String sqlRecursive = """
+            WITH RECURSIVE ArbreTaches AS (
+                SELECT t.id, t.titre, t.type, t.description, t.priorite, t.etat, t.DateDebut, t.duree
+                FROM tache t
+                JOIN colonne2tache c2t ON t.id = c2t.id_tache
+                JOIN colonne c ON c2t.id_colonne = c.id
+                JOIN projet2colonne p2c ON c.id = p2c.id_colonne
+                WHERE p2c.id_projet = ?
+                UNION ALL
+                SELECT t.id, t.titre, t.type, t.description, t.priorite, t.etat, t.DateDebut, t.duree
+                FROM tache t
+                JOIN dependance d ON t.id = d.id_sous_tache
+                JOIN ArbreTaches mere ON d.id_tache_mere = mere.id
+            )
+            SELECT DISTINCT * FROM ArbreTaches WHERE etat = 'Archivée';
+        """;
         List<TacheAbstraite> taches = new ArrayList<>();
         try (Connection con = DBConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
-
+             PreparedStatement ps = con.prepareStatement(sqlRecursive)) {
             ps.setInt(1, idProjet);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
                     TacheAbstraite t = construireTache(rs);
-                    if (t instanceof TacheMere) {
-                        chargerSousTachesInternal((TacheMere) t, con);
-                    }
                     taches.add(t);
                 }
             }
