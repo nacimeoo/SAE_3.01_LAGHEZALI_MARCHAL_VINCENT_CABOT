@@ -200,7 +200,6 @@ public class VueDescriptionTache extends Dialog<TacheAbstraite> {
                 } catch (NumberFormatException e) {
                     System.err.println("Erreur de format pour la durée");
                 }
-
                 return tacheEnCoursEdition;
             }
             return null;
