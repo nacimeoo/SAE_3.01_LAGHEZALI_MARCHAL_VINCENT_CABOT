@@ -46,7 +46,6 @@ public class VueListe extends BorderPane implements Observateur, VueProjet {
     private void initialiserComposant(){
         this.setPadding(new Insets(15));
 
-        // Header
         HBox header = new HBox(20);
         header.setAlignment(Pos.CENTER_LEFT);
         header.setPadding(new Insets(0,0,20,0));
@@ -64,7 +63,6 @@ public class VueListe extends BorderPane implements Observateur, VueProjet {
         scrollPane.setFitToHeight(true);
         this.setCenter(scrollPane);
 
-        // Sidebar
         VBox sidebar = new VBox(20);
         sidebar.setPadding(new Insets(0, 0, 0, 15));
         sidebar.setPrefWidth(200);
@@ -352,8 +350,5 @@ public class VueListe extends BorderPane implements Observateur, VueProjet {
         return dateSelectionnee;
     }
 
-    private void selectionnerDate(LocalDate date) {
-        this.dateSelectionnee = date;
-    }
 
 }
