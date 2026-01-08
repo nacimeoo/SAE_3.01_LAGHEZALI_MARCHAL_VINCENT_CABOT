@@ -29,14 +29,7 @@ public class VueDescriptionTache extends Dialog<TacheAbstraite> {
 
 
     public VueDescriptionTache(TacheAbstraite tache,  Projet projet, ProjetService projetService) {
-        this.tacheEnCoursEdition = tache;
-        this.projet = projet;
         this.projetService = projetService;
-
-
-
-
-
         this.tacheEnCoursEdition = tache;
         this.projet = projet;
 
@@ -91,8 +84,6 @@ public class VueDescriptionTache extends Dialog<TacheAbstraite> {
         cbEtiquettesExistantes.setPrefWidth(150);
 
         chargerEtiquettesDuProjet(cbEtiquettesExistantes);
-
-        //chargerEtiquettesExistantes(cbEtiquettesExistantes);
 
         Button btnAddExistante = new Button("Attribuer");
         btnAddExistante.setOnAction(e -> {
