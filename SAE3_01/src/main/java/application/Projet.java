@@ -1,7 +1,5 @@
 package application;
 
-import application.DAO.ITacheDAO;
-
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
