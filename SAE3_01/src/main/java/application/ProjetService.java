@@ -5,10 +5,8 @@ import application.DAO.EtiquetteDAOImpl;
 import application.DAO.ProjetDAOImpl;
 import application.DAO.TacheDAOImpl;
 
-import java.net.SocketOption;
 import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 public class ProjetService {
@@ -18,11 +16,6 @@ public class ProjetService {
     private TacheDAOImpl tacheDAO = new TacheDAOImpl();
     private EtiquetteDAOImpl etiquetteDAO = new EtiquetteDAOImpl();
 
-    public Projet creerProjet(String nom, Date dateCreation) throws Exception {
-        Projet projet = new Projet(nom, dateCreation);
-        projetDAO.save(projet);
-        return projet;
-    }
 
     public void ajouterColonne(Projet projet, Colonne colonne) throws Exception {
         if (projet == null || colonne == null) return;
@@ -49,7 +42,7 @@ public class ProjetService {
 
     public void supprimerTache(Projet projet, Colonne colonne, TacheAbstraite tache) throws Exception {
         if (colonne == null || tache == null) return;
-        TacheAbstraite tacheCore = extraireCore(tache);
+        TacheAbstraite tacheCore = extraireBase(tache);
         tacheDAO.delete(tacheCore.getId());
         nettoyerTacheDeSaStructure(projet, tache);
         projet.notifierObservateurs();
@@ -57,9 +50,6 @@ public class ProjetService {
 
     public void deplacerTache(Projet projet, Colonne src, Colonne dest, TacheAbstraite tache) throws Exception {
         if (src == null || dest == null || tache == null) return;
-
-        // Correction du merge : suppression du code en double.
-        // On garde la version récursive qui met à jour la colonne pour toute l'arborescence
         updateColonneEnBaseRecursif(tache, dest.getId());
 
         src.supprimerTache(tache);
@@ -69,7 +59,7 @@ public class ProjetService {
 
     private void updateColonneEnBaseRecursif(TacheAbstraite t, int nouveauIdColonne) throws Exception {
         colonneDAO.deplacerTacheDAO(nouveauIdColonne, t.getId());
-        TacheAbstraite core = extraireCore(t); // Utilisation de extraireCore pour plus de sureté
+        TacheAbstraite core = extraireBase(t);
 
         if (core instanceof TacheMere) {
             TacheMere mere = (TacheMere) core;
@@ -82,8 +72,8 @@ public class ProjetService {
     public boolean ajouterDependance(Projet projet, TacheMere mere, TacheAbstraite fille, Colonne colSource, Colonne colCible) throws Exception {
         if (mere == null || fille == null) return false;
 
-        TacheAbstraite mereCore = extraireCore(mere);
-        TacheAbstraite filleCore = extraireCore(fille);
+        TacheAbstraite mereCore = extraireBase(mere);
+        TacheAbstraite filleCore = extraireBase(fille);
 
         tacheDAO.updateType(mereCore.getId(), 0);
 
@@ -112,25 +102,10 @@ public class ProjetService {
     public void changerEtat(Projet projet, TacheAbstraite tache, String etat) throws Exception {
         if (projet == null || tache == null) return;
 
-        TacheAbstraite tacheCore = extraireCore(tache);
+        TacheAbstraite tacheCore = extraireBase(tache);
         tacheDAO.updateEtat(etat, tacheCore.getId());
-
-        // Mise à jour de l'objet racine (en cas de décorateur)
         tacheCore.setEtat(etat);
-        // Mise à jour de l'objet manipulé (la couche extérieure)
         tache.setEtat(etat);
-
-        projet.notifierObservateurs();
-    }
-
-    public void ajouterEtiquette(Projet projet, int idCol, int indiceTache, TacheAbstraite tache, Etiquette et) throws Exception {
-        if (tache == null || et == null || projet == null) return;
-
-        etiquetteDAO.attachEtiquetteToTache(tache.getId(), et.getIdEtiquette());
-
-        TacheAbstraite tacheDecoree = new Etiquette(tache, et.getLibelle(), null);
-
-        projet.getColonnes().get(idCol).getTaches().set(indiceTache, tacheDecoree);
 
         projet.notifierObservateurs();
     }
@@ -138,7 +113,7 @@ public class ProjetService {
     public void modifierTache(Projet projet, TacheAbstraite tacheModifiee) throws Exception {
         if (projet == null || tacheModifiee == null) return;
 
-        TacheAbstraite tacheRacine = extraireCore(tacheModifiee);
+        TacheAbstraite tacheRacine = extraireBase(tacheModifiee);
 
         tacheDAO.update_detail(tacheRacine);
         etiquetteDAO.supprimerLiensEtiquettes(tacheRacine.getId());
@@ -164,7 +139,7 @@ public class ProjetService {
             for (int i = 0; i < taches.size(); i++) {
                 TacheAbstraite t = taches.get(i);
 
-                TacheAbstraite tRacineDansListe = extraireCore(t);
+                TacheAbstraite tRacineDansListe = extraireBase(t);
                 if (tRacineDansListe.getId() == tacheRacine.getId()) {
                     taches.set(i, tacheModifiee);
                     remplace = true;
@@ -182,7 +157,7 @@ public class ProjetService {
     }
 
     private boolean remplacerDansSousTaches(TacheAbstraite parent, int idCible, TacheAbstraite tacheModifiee) {
-        TacheAbstraite core = extraireCore(parent);
+        TacheAbstraite core = extraireBase(parent);
 
         if (core instanceof TacheMere) {
             TacheMere mere = (TacheMere) core;
@@ -190,7 +165,7 @@ public class ProjetService {
 
             for (int i = 0; i < sousTaches.size(); i++) {
                 TacheAbstraite st = sousTaches.get(i);
-                TacheAbstraite stCore = extraireCore(st);
+                TacheAbstraite stCore = extraireBase(st);
 
                 if (stCore.getId() == idCible) {
                     sousTaches.set(i, tacheModifiee);
@@ -208,7 +183,7 @@ public class ProjetService {
     public void detacherSousTache(Projet projet, TacheAbstraite tache, Colonne col) throws Exception {
         if (projet == null || tache == null) return;
 
-        TacheAbstraite tacheCore = extraireCore(tache);
+        TacheAbstraite tacheCore = extraireBase(tache);
 
         tacheDAO.detacherSousTache(tacheCore.getId(), col.getId());
         TacheMere parent = trouverParent(projet, tache);
@@ -238,7 +213,7 @@ public class ProjetService {
     }
 
     private TacheMere chercherParentRecursif(TacheAbstraite current, TacheAbstraite cible) {
-        TacheAbstraite core = extraireCore(current);
+        TacheAbstraite core = extraireBase(current);
 
         if (core instanceof TacheMere) {
             TacheMere mere = (TacheMere) core;
@@ -288,27 +263,6 @@ public class ProjetService {
         return true;
     }
 
-    public boolean verifierReglesDates(Projet projet, TacheAbstraite tache, LocalDate nouvelleDate) {
-        boolean reponse = true;
-
-        if (tache instanceof TacheAbstraite) {
-            TacheAbstraite st = tache;
-            TacheMere mere = trouverParent(projet, st);
-
-            System.out.println("Sous tache : " + tache);
-            System.out.println("tache mere : " + mere);
-
-            if (mere != null && mere.getDateDebut() != null) {
-                if (nouvelleDate.isAfter(mere.getDateDebut())) {
-                    reponse = false;
-                    throw new IllegalStateException(
-                            "La sous-tâche ne peut pas commencer après la tâche mère."
-                    );
-                }
-            }
-        }
-        return reponse;
-    }
 
     public LocalDate ajusterDateSelonRegles(
             Projet projet,
@@ -355,9 +309,8 @@ public class ProjetService {
     private TacheAbstraite chargerEtiquettes(TacheAbstraite t) {
         if (t == null) return null;
 
-        TacheAbstraite base = extraireCore(t);
+        TacheAbstraite base = extraireBase(t);
 
-        // Gestion récursive des enfants d'abord
         if (base instanceof TacheMere) {
             TacheMere mere = (TacheMere) base;
             List<TacheAbstraite> sousTachesAvecEtiquettes = new ArrayList<>();
@@ -371,7 +324,6 @@ public class ProjetService {
             mere.getSousTaches().addAll(sousTachesAvecEtiquettes);
         }
 
-        // Ajout des étiquettes sur la tâche courante
         TacheAbstraite tacheAvecEtiquettes = t;
         try {
             List<Etiquette> etiquettes = etiquetteDAO.getEtiquettesByTacheId(base.getId());
@@ -411,7 +363,7 @@ public class ProjetService {
         return archives;
     }
 
-    public TacheAbstraite extraireCore(TacheAbstraite tache) {
+    public TacheAbstraite extraireBase(TacheAbstraite tache) {
         TacheAbstraite core = tache;
         while (core instanceof TacheDecorateur) {
             core = ((TacheDecorateur) core).getTacheDecoree();
