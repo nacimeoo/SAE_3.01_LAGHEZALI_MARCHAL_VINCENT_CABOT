@@ -400,7 +400,6 @@ public class ProjetService {
             ajusterDateTacheMereSelonSousTaches(mere);
 
             try {
-
                 tacheDAO.update_detail(mere);
 
                 ajusterDatesRecursifVersHaut(projet, mere);

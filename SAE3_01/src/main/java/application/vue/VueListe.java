@@ -6,23 +6,18 @@ import application.controller.ControleurEditerTache;
 import application.controller.ControleurSupprimerTache;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.SnapshotParameters;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.control.ScrollPane;
-import javafx.scene.control.TextField;
-import javafx.scene.input.ClipboardContent;
-import javafx.scene.input.Dragboard;
-import javafx.scene.input.TransferMode;
+import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
+
 import java.time.LocalDate;
 import java.time.format.TextStyle;
 import java.util.*;
 
 public class VueListe extends BorderPane implements Observateur, VueProjet {
+
     private Projet projet;
     private ProjetService service;
     private LocalDate dateSelectionnee = null;
@@ -43,12 +38,12 @@ public class VueListe extends BorderPane implements Observateur, VueProjet {
         rafraichirVue();
     }
 
-    private void initialiserComposant(){
+    private void initialiserComposant() {
         this.setPadding(new Insets(15));
 
         HBox header = new HBox(20);
         header.setAlignment(Pos.CENTER_LEFT);
-        header.setPadding(new Insets(0,0,20,0));
+        header.setPadding(new Insets(0, 0, 20, 0));
         Button backButton = new Button("<- Dashboard");
 
         Label titreLabel = new Label(projet.getNom());
@@ -123,8 +118,8 @@ public class VueListe extends BorderPane implements Observateur, VueProjet {
     private void collecterTachesAvecDate(TacheAbstraite tache, Map<LocalDate, List<TacheAbstraite>> map) {
         if (tache == null) return;
 
-        if (tache.getDate() != null) {
-            map.computeIfAbsent(tache.getDate(), d -> new ArrayList<>()).add(tache);
+        if (tache.getDateDebut() != null) {
+            map.computeIfAbsent(tache.getDateDebut(), d -> new ArrayList<>()).add(tache);
         }
 
         TacheAbstraite core = tache;
@@ -141,16 +136,13 @@ public class VueListe extends BorderPane implements Observateur, VueProjet {
     }
 
     private VBox creerColonneDate(LocalDate date, List<TacheAbstraite> taches) {
-        VBox col = new VBox(0); // VGap à 0 pour coller l'entête à la première ligne
+        VBox col = new VBox(0);
         col.setPadding(new Insets(10));
-        col.setBorder(new Border(new BorderStroke(
-                Color.BLACK, BorderStrokeStyle.SOLID, CornerRadii.EMPTY, new BorderWidths(1)
-        )));
+        col.setBorder(new Border(new BorderStroke(Color.BLACK, BorderStrokeStyle.SOLID, CornerRadii.EMPTY, new BorderWidths(1))));
 
         String jour = date.getDayOfWeek().getDisplayName(TextStyle.FULL, Locale.FRENCH);
-        jour = jour.substring(0,1).toUpperCase() + jour.substring(1);
-        String titre = jour  + " " + date;
-        Label lblDate = new Label(titre);
+        jour = jour.substring(0, 1).toUpperCase() + jour.substring(1);
+        Label lblDate = new Label(jour + " " + date);
         lblDate.setFont(Font.font("Arial", FontWeight.BOLD, 16));
         lblDate.setPadding(new Insets(0, 0, 10, 0));
 
@@ -158,16 +150,11 @@ public class VueListe extends BorderPane implements Observateur, VueProjet {
 
         col.setOnMouseClicked(e -> {
             if (vueColonneSelectionnee != null) {
-                vueColonneSelectionnee.setBorder(new Border(new BorderStroke(
-                        Color.BLACK, BorderStrokeStyle.SOLID, CornerRadii.EMPTY, new BorderWidths(1)
-                )));
+                vueColonneSelectionnee.setBorder(new Border(new BorderStroke(Color.BLACK, BorderStrokeStyle.SOLID, CornerRadii.EMPTY, new BorderWidths(1))));
             }
             vueColonneSelectionnee = col;
             dateSelectionnee = date;
-            col.setBorder(new Border(new BorderStroke(
-                    Color.BLUE, BorderStrokeStyle.SOLID, CornerRadii.EMPTY, new BorderWidths(2)
-            )));
-            colonneSelectionnee = new Colonne(date.toString());
+            col.setBorder(new Border(new BorderStroke(Color.BLUE, BorderStrokeStyle.SOLID, CornerRadii.EMPTY, new BorderWidths(2))));
         });
 
         boolean isFirst = true;
@@ -175,39 +162,6 @@ public class VueListe extends BorderPane implements Observateur, VueProjet {
             col.getChildren().add(creerCarteTache(t, isFirst));
             isFirst = false;
         }
-
-        col.setOnDragOver(event -> {
-            if (event.getGestureSource() != col && event.getDragboard().hasString()) {
-                event.acceptTransferModes(TransferMode.MOVE);
-            }
-            event.consume();
-        });
-
-        col.setOnDragDropped(event -> {
-            Dragboard db = event.getDragboard();
-            boolean success = false;
-            if (db.hasString()) {
-                try {
-                    String idStr = db.getString();
-
-
-                    TacheAbstraite t = projet.getTacheById(idStr);
-                    if (t != null) {
-
-                        t.setDateDebut(date);
-
-                        service.ajusterDatesRecursifVersHaut(projet, t);
-
-                        projet.notifierObservateurs();
-                        success = true;
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-            event.setDropCompleted(success);
-            event.consume();
-        });
 
         return col;
     }
@@ -245,10 +199,8 @@ public class VueListe extends BorderPane implements Observateur, VueProjet {
         ligne.setMaxWidth(Region.USE_PREF_SIZE);
         ligne.setStyle("-fx-border-color: black; -fx-background-color: white; -fx-font-size: 12px;");
         if (!afficherEntete) {
-
             ligne.setStyle("-fx-border-color: black; -fx-border-width: 1 1 0 1; -fx-background-color: white; -fx-font-size: 12px;");
         }
-
 
         VBox h = new VBox();
         Label lblNom = new Label(t.getNom());
@@ -267,7 +219,6 @@ public class VueListe extends BorderPane implements Observateur, VueProjet {
                 Etiquette et = (Etiquette) current;
                 Label lblEtiquette = new Label(et.getLibelle());
                 String hexColor = et.getCouleur().startsWith("0x") ? et.getCouleur().replace("0x", "#") : et.getCouleur();
-
                 lblEtiquette.setStyle("-fx-background-color: " + hexColor + "; -fx-text-fill: white; -fx-padding: 2 5; -fx-background-radius: 3; -fx-font-size: 10px; -fx-font-weight: bold;");
                 zoneEtiquettes.getChildren().add(lblEtiquette);
             }
@@ -303,15 +254,6 @@ public class VueListe extends BorderPane implements Observateur, VueProjet {
             }
         });
 
-        ligne.setOnDragDetected(e -> {
-            Dragboard db = ligne.startDragAndDrop(TransferMode.MOVE);
-            ClipboardContent content = new ClipboardContent();
-            content.putString(String.valueOf(t.getId()));
-            db.setContent(content);
-            db.setDragView(ligne.snapshot(new SnapshotParameters(), null));
-            e.consume();
-        });
-
         bloc.getChildren().add(ligne);
         return bloc;
     }
@@ -321,7 +263,7 @@ public class VueListe extends BorderPane implements Observateur, VueProjet {
 
     public void resetSelection() {
         this.tacheSelectionnee = null;
-        if(this.vueTacheSelectionnee != null) {
+        if (this.vueTacheSelectionnee != null) {
             this.vueTacheSelectionnee.setStyle("-fx-border-color: black; -fx-background-color: white;");
         }
         this.vueTacheSelectionnee = null;
@@ -341,14 +283,9 @@ public class VueListe extends BorderPane implements Observateur, VueProjet {
     }
 
     @Override
-    public boolean estVueListe() {
-        return true;
-    }
+    public boolean estVueListe() { return true; }
 
     @Override
-    public LocalDate getDateSelectionnee() {
-        return dateSelectionnee;
-    }
-
+    public LocalDate getDateSelectionnee() { return dateSelectionnee; }
 
 }
