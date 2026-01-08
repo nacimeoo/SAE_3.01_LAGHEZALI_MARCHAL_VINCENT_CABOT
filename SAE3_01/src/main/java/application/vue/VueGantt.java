@@ -14,10 +14,8 @@ import java.time.LocalDate;
 
 public class VueGantt extends BorderPane implements Observateur{
 
-    private Projet projet;
+    private final Projet projet;
     private ProjetService service;
-
-    private VBox boardContainer;
 
     private final int LARGEUR_JOUR = 75;
     private final int HAUTEUR_LIGNE = 50;
@@ -46,7 +44,7 @@ public class VueGantt extends BorderPane implements Observateur{
         header.getChildren().addAll(backButton,titreLabel);
         this.setTop(header);
 
-        boardContainer = new VBox(15);
+        VBox boardContainer = new VBox(15);
         boardContainer.setPadding(new Insets(10));
         ScrollPane scrollPane = new ScrollPane(boardContainer);
         scrollPane.setFitToHeight(true);
@@ -96,19 +94,18 @@ public class VueGantt extends BorderPane implements Observateur{
 
         for (Colonne colonne : projet.getColonnes()) {
             for(TacheAbstraite t : colonne.getTaches()) {
-                indexLigne = dessinerTacheRecursive(t, dateZero, surfaceDessin, indexLigne);
+                indexLigne = dessinerTacheRecursive(t, dateZero, surfaceDessin, indexLigne, 0);
             }
         }
         ((ScrollPane) this.getCenter()).setContent(surfaceDessin);
     }
 
-    private int dessinerTacheRecursive(TacheAbstraite t, LocalDate dateZero, Pane surfaceDessin, int indexLigne) {
+    private int dessinerTacheRecursive(TacheAbstraite t, LocalDate dateZero, Pane surfaceDessin, int indexLigne, int profondeur) {
 
         TacheAbstraite tacheReelle = t;
 
         if (t.getDateDebut() != null) {
             long joursEcoules = java.time.temporal.ChronoUnit.DAYS.between(dateZero, t.getDateDebut());
-
             if (joursEcoules < 0) joursEcoules = 0;
 
             double x = joursEcoules * LARGEUR_JOUR;
@@ -121,38 +118,46 @@ public class VueGantt extends BorderPane implements Observateur{
             barre.setArcWidth(10);
             barre.setArcHeight(10);
 
-            while (tacheReelle instanceof TacheDecorateur) {
-                tacheReelle = ((TacheDecorateur) tacheReelle).getTacheDecoree();
-            }
+            Color couleurFond = genererCouleurParProfondeur(profondeur);
+            barre.setFill(couleurFond);
 
-            if (tacheReelle instanceof SousTache) {
-                barre.setFill(Color.CORNFLOWERBLUE);
-                barre.setStroke(null);
-            }
-            else if (tacheReelle instanceof TacheMere) {
-                barre.setFill(Color.DARKBLUE);
-            }
-            else {
-                barre.setFill(Color.ORANGE);
-            }
+            barre.setStroke(Color.DARKBLUE);
+            barre.setStrokeWidth(0.5);
 
             Label nom = new Label(t.getNom());
             nom.setLayoutX(x + 5);
             nom.setLayoutY(y + 4);
-            nom.setTextFill(Color.WHITE);
+
+            if (profondeur > 5) {
+                nom.setTextFill(Color.BLACK);
+            } else {
+                nom.setTextFill(Color.WHITE);
+            }
 
             surfaceDessin.getChildren().addAll(barre, nom);
         }
+
         int nouvelIndex = indexLigne + 1;
+
+        while (tacheReelle instanceof TacheDecorateur) {
+            tacheReelle = ((TacheDecorateur) tacheReelle).getTacheDecoree();
+        }
 
         if (tacheReelle instanceof TacheMere) {
             TacheMere mere = (TacheMere) tacheReelle;
             for (TacheAbstraite enfant : mere.getSousTaches()) {
-                nouvelIndex = dessinerTacheRecursive(enfant, dateZero, surfaceDessin, nouvelIndex);
+                nouvelIndex = dessinerTacheRecursive(enfant, dateZero, surfaceDessin, nouvelIndex, profondeur + 1);
             }
         }
 
         return nouvelIndex;
+    }
+
+    private Color genererCouleurParProfondeur(int profondeur) {
+        Color base = Color.DARKBLUE;
+        double facteur = Math.min(profondeur * 0.15, 0.8);
+
+        return base.interpolate(Color.WHITE, facteur);
     }
 
     @Override
