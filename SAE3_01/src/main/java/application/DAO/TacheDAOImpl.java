@@ -241,34 +241,21 @@ public class TacheDAOImpl implements ITacheDAO {
         }
     }
 
+    // Dans TacheDAOImpl.java
+
     public void addDependanceDAO(int idF, int idM) {
-        String sqlInsertDep = "INSERT INTO dependance (id_tache_mere, id_sous_tache) VALUES (?, ?)";
-        String sqlUpdateChild = "UPDATE tache SET type = 1 WHERE id = ?";
-        String sqlUpdateParent = "UPDATE tache SET type = 0 WHERE id = ?";
+        String sql = "INSERT INTO dependance (id_tache_mere, id_sous_tache) VALUES (?, ?)";
 
-        try (Connection con = DBConnection.getConnection()) {
-            con.setAutoCommit(false);
-            try (PreparedStatement psDep = con.prepareStatement(sqlInsertDep);
-                 PreparedStatement psChild = con.prepareStatement(sqlUpdateChild);
-                 PreparedStatement psParent = con.prepareStatement(sqlUpdateParent)) {
+        try (Connection con = DBConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
 
-                psDep.setInt(1, idM);
-                psDep.setInt(2, idF);
-                psDep.executeUpdate();
+            ps.setInt(1, idM);
+            ps.setInt(2, idF);
 
-                psChild.setInt(1, idF);
-                psChild.executeUpdate();
+            ps.executeUpdate();
 
-                psParent.setInt(1, idM);
-                psParent.executeUpdate();
-
-                con.commit();
-            } catch (Exception e) {
-                con.rollback();
-                throw new RuntimeException(e);
-            }
         } catch (SQLException e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException("Erreur lors de la création de la dépendance", e);
         }
     }
 
@@ -326,6 +313,19 @@ public class TacheDAOImpl implements ITacheDAO {
                 con.rollback();
                 throw e;
             }
+        }
+    }
+
+    public void updateType(int id, int nouveauType) throws Exception {
+        String sql = "UPDATE tache SET type = ? WHERE id = ?";
+
+        try (Connection con = DBConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+
+            ps.setInt(1, nouveauType);
+            ps.setInt(2, id);
+
+            ps.executeUpdate();
         }
     }
 }
