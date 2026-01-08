@@ -42,7 +42,6 @@ public class TacheMere extends TacheAbstraite {
                 .append("|- Tâche Mère : ")
                 .append(this.getNom());
 
-        // Ajouter les dépendances en arbre
         for (TacheAbstraite t : dependance) {
             sb.append(t.afficher(indent + "   "));
         }
