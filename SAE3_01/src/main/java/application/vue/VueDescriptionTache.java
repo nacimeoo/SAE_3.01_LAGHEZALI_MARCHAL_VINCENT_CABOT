@@ -182,11 +182,7 @@ public class VueDescriptionTache extends Dialog<TacheAbstraite> {
                         dpDate.getValue()
                 );
                 tacheEnCoursEdition.setDateDebut(dateCorrigee);
-                try {
-                    projetService.ajusterDatesRecursifVersHaut(projet, tacheEnCoursEdition);
-                } catch (Exception e) {
-                    throw new RuntimeException(e);
-                }
+
 
 
                 try {
@@ -200,7 +196,14 @@ public class VueDescriptionTache extends Dialog<TacheAbstraite> {
                 } catch (NumberFormatException e) {
                     System.err.println("Erreur de format pour la durée");
                 }
+                
+                try {
+                    projetService.ajusterDatesRecursifVersHaut(projet, tacheEnCoursEdition);
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
                 return tacheEnCoursEdition;
+
             }
             return null;
         });
