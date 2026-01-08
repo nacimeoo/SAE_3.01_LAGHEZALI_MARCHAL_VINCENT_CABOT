@@ -4,6 +4,8 @@ import application.DAO.ColonneDAOImpl;
 import application.DAO.EtiquetteDAOImpl;
 import application.DAO.ProjetDAOImpl;
 import application.DAO.TacheDAOImpl;
+
+import java.net.SocketOption;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Date;
@@ -77,32 +79,29 @@ public class ProjetService {
         }
     }
 
-    public boolean ajouterDependance(Projet projet, TacheMere mere, TacheAbstraite fille) throws Exception {
+    public boolean ajouterDependance(Projet projet, TacheMere mere, TacheAbstraite fille, Colonne colSource, Colonne colCible) throws Exception {
         if (mere == null || fille == null) return false;
 
         TacheAbstraite mereCore = extraireCore(mere);
         TacheAbstraite filleCore = extraireCore(fille);
 
+        tacheDAO.updateType(mereCore.getId(), 0);
+
+        int typePourFille = 1;
+        if (filleCore instanceof TacheMere) {
+            TacheMere filleMere = (TacheMere) filleCore;
+            if (!filleMere.getSousTaches().isEmpty()) {
+                typePourFille = 0;
+            }
+        }
+        tacheDAO.updateType(filleCore.getId(), typePourFille);
         tacheDAO.addDependanceDAO(filleCore.getId(), mereCore.getId());
         mere.ajouterDependance(fille);
 
-        boolean succes = mere.ajouterDependance(fille);
-        projet.notifierObservateurs();
-
-        return succes;
-    }
-
-    public boolean ajouterDependance(Projet projet, TacheMere mere, TacheAbstraite fille, Colonne col, Colonne colCible) throws Exception {
-        if (mere == null || fille == null) return false;
-
-        TacheAbstraite mereCore = extraireCore(mere);
-        TacheAbstraite filleCore = extraireCore(fille);
-
-        tacheDAO.addDependanceDAO(filleCore.getId(), mereCore.getId());
-        mere.ajouterDependance(fille);
-        col.getTaches().remove(fille);
-
-        if (col != null && colCible != null && col.getId() != colCible.getId()) {
+        if (colSource != null) {
+            colSource.getTaches().remove(fille);
+        }
+        if (colSource != null && colCible != null && colSource.getId() != colCible.getId()) {
             colonneDAO.deplacerTacheDAO(colCible.getId(), filleCore.getId());
         }
 
@@ -275,8 +274,6 @@ public class ProjetService {
             return null;
         }
     }
-
-    // --- Méthodes ajoutées par les collègues ---
 
     public boolean verifierEtatTacheMere(TacheAbstraite tache) {
         if (tache instanceof TacheMere) {
