@@ -9,13 +9,6 @@ public class Description extends TacheDecorateur{
         this.libelle = libelle;
     }
 
-    public String getLibelle() {
-        return libelle;
-    }
-
-    public void setLibelle(String libelle) {
-        this.libelle = libelle;
-    }
 
     @Override
     public String afficher(String indent) {
