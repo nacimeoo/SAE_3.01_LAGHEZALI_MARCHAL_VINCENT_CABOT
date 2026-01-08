@@ -359,7 +359,6 @@ public class VueKanban extends BorderPane implements Observateur, VueProjet {
             core = ((TacheDecorateur) core).getTacheDecoree();
         }
 
-        if (core instanceof TacheMere) {
             TacheMere mere = (TacheMere) core;
 
             cardContainer.setOnDragOver(event -> {
@@ -385,44 +384,30 @@ public class VueKanban extends BorderPane implements Observateur, VueProjet {
                 event.consume();
             });
 
-            cardContainer.setOnDragDropped(event -> {
-                Dragboard db = event.getDragboard();
-                if (db.hasString()) {
+        cardContainer.setOnDragDropped(event -> {
+            Dragboard db = event.getDragboard();
+            boolean success = false;
+            if (db.hasString()) {
+                try {
                     String[] parts = db.getString().split(":");
-                    int colSourceIdx = Integer.parseInt(parts[0]);
-                    int idFille = Integer.parseInt(parts[1]);
-                    try {
-                        TacheAbstraite fille = null;
-                        Colonne currentCol = projet.getColonnes().get(colSourceIdx);
-                        Colonne colCible = projet.getColonnes().get(indexColonneSource);
+                    int idSource = Integer.parseInt(parts[1]);
 
-                        for (TacheAbstraite task : currentCol.getTaches()) {
-                            if (task.getId() == idFille) fille = task;
-                        }
+                    TacheAbstraite sourceTask = trouverTacheParId(idSource);
 
-                        if (fille != null && fille != t) {
-
-                            try {
-                                
-                                service.ajouterDependance(projet, mere, fille, currentCol, colCible);
+                    if (sourceTask != null && sourceTask.getId() != t.getId()) {
 
 
-                                service.ajusterDatesRecursifVersHaut(projet, fille);
-
-
-                                event.setDropCompleted(true);
-                            } catch (Exception ex) {
-                                ex.printStackTrace();
-                                event.setDropCompleted(false);
-                            }
-                            event.consume();
-                        }
-                    } catch (Exception ex) {
-                        ex.printStackTrace();
+                        service.reassignerTache(projet, sourceTask, t);
+                        service.ajusterDatesRecursifVersHaut(projet, sourceTask);
+                        success = true;
                     }
+                } catch (Exception ex) {
+                    ex.printStackTrace();
                 }
-                event.consume();
-            });
+            }
+            event.setDropCompleted(success);
+            event.consume();
+        });
 
 
             VBox childrenBox = new VBox(5);
@@ -433,10 +418,11 @@ public class VueKanban extends BorderPane implements Observateur, VueProjet {
                 }
             }
             cardContainer.getChildren().add(childrenBox);
-        }
+
 
         return cardContainer;
     }
 
+//
 
 }
